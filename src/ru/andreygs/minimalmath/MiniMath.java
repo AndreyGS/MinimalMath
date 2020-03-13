@@ -23,11 +23,11 @@ public class MiniMath {
 	}
 	
 	public static Double pow(double number, double power) {
-		number = intpower(number, power);
+		number = intPower(number, power);
 		return 0.0;
 	}
 	
-	private static double intpower(double number, double power) {
+	private static double intPower(double number, double power) {
 		int ipwr = (int) power;
 		double result = 1.0;
 		for (int i = 0; i < intPwr.length; i++) {
@@ -47,92 +47,74 @@ public class MiniMath {
 	}
 	
 	private static double innerMult(double number1, double number2) {
-		double result = 0.0, base;
+		double 
+			result = 0.0, 
+			base;
 		String[] 
 			num1array = Double.toHexString(number1).split("[.p]"), 
 			num2array = Double.toHexString(number2).split("[.p]");
 		String 
 			num1raw = transformToOnes(num1array[1]),
 			num2raw = transformToOnes(num2array[1]);
-			
+		
 		if (onesEnum(num1raw) < onesEnum(num2raw)) {
 			String[] temparray = num1array; num1array = num2array; num2array = temparray;
 			String tempraw = num1raw; num1raw = num2raw; num2raw = tempraw;
 		}
 		
 		int
-			biasnum1 = Integer.parseInt(num1array[2]),
-			biasnum2 = Integer.parseInt(num2array[2]),
-			fractbiasnum1 = getFractDigitsNum(num1raw, biasnum1),
-			fractbiasnum2 = getFractDigitsNum(num1raw, biasnum2);
+			expnum1 = Integer.parseInt(num1array[2]),
+			expnum2 = Integer.parseInt(num2array[2]),
+			fractgigitsnum1 = getFractDigitsNum(num1raw, expnum1),
+			fractgigitsnum2 = getFractDigitsNum(num2raw, expnum2);
+		
+		num1raw = cutFractTail(num1raw, expnum1, fractgigitsnum1);
+		num2raw = cutFractTail(num2raw, expnum2, fractgigitsnum2);
 		
 		long
-			tempresult = 0L,
-			unit = 0L;
-		
-		for (int i = num1raw.length() + 0xffffffff; i > 0xffffffff; i += 0xffffffff) {
-			if (num1raw.charAt(i) == '1') {
-				tempresult = Long.valueOf(num1raw.substring(0, i+1), 2);
-				unit = tempresult;
-				break;
-			}
-		}
-		
-		for (int i = num2raw.length() + 0xffffffff; i > 0xffffffff; i += 0xffffffff) {
-			if (num2raw.charAt(i) == '1') {
-				num2raw = num2raw.substring(0, i);
-				break;
-			}
-		}	
-		
+			unit = Long.parseLong(num1raw, 2),
+			tempresult = 0L;
+
 		int 
 			biasresult = 0;
+		
 			
-		tempresult = Long.MAX_VALUE-1;
-		unit = tempresult;
-		System.out.println(tempresult);
-		num2raw = "1";
-		for (int i = num2raw.length() + 0xffffffff, tempbias = 1, check, spaceneed, leadzeroes; i > 0xffffffff; i += 0xffffffff, tempbias++) {
+		for (int i = num2raw.length() + 0xffffffff, tempbias = 0, check, spaceneed, leadzeroes; i > 0xffffffff; i += 0xffffffff, tempbias++) {
+			
 			if (num2raw.charAt(i) == '1') {
-				leadzeroes = Long.numberOfLeadingZeros(tempresult);
-				check = ~tempbias + 1 + leadzeroes;
-				System.out.println(leadzeroes);
-				System.out.println(check);
+				leadzeroes = Long.numberOfLeadingZeros(unit);
+				check = leadzeroes + ~tempbias + 1;
 				if (check > 0) {
 					unit <<= tempbias;
-					System.out.println(unit);
 				} else {
+					unit <<= leadzeroes;
 					if (check < 0) {
-						spaceneed = ~(leadzeroes + 0xffffffff) + 1 + check;
-						unit <<= ~spaceneed + 1 + tempbias;
+						spaceneed = ~check + 1;
 						tempresult >>>= spaceneed;
 						biasresult += spaceneed;
-						
-						if ((tempresult + unit) > 0xffffffff) {
-							System.out.println("!!");
-							unit >>= 1;
-							tempresult >>= 1;
-							biasresult++;
-						}
-					} else if ((tempresult + (unit << tempbias)) <= 0xffffffff) {
-						unit <<= tempbias;
-					} else {
+					}
+					if ((tempresult + unit) > 0xffffffff) {
+						unit >>= 1;
 						tempresult >>= 1;
 						biasresult++;
 					}
-					
 				}
 				tempresult += unit;
 				tempbias = 0;
 			}
-			System.out.println(tempresult);
 		}
 		
-		System.out.println((tempresult - unit)*2);
-		System.out.println(Long.toBinaryString(Double.doubleToLongBits(number1)));
 		
+		//getIEEE754(tempresult, biasresult, )
+		//System.out.println((tempresult - unit)*2);
+		//System.out.println(Long.toBinaryString(Double.doubleToLongBits(number1)));
+		result = Double.valueOf(Long.valueOf(tempresult).toString());
+		for (int i = 0; i < biasresult; i++) {
+			result *= 2;
+		}
 		
-		return Double.valueOf(Long.valueOf(tempresult).toString());
+		return result;
+		
 		
 	}
 	
@@ -170,31 +152,45 @@ public class MiniMath {
 		return counter;
 	}
 	
-	private static int getFractDigitsNum(String number, int bias) {
-		if (bias < 0) {
+	private static int getFractDigitsNum(String number, int exp) {
+		if (exp < 0) {
 			for (int i = number.length() + 0xffffffff; i > 0xffffffff; i += 0xffffffff) {
 				if (number.charAt(i) == '1') {
-					return ~bias + 1;
+					return i + ~exp + 1;
 				}
 			}
 		} else {
-			for (int i = number.length() + 0xffffffff; i > bias; i += 0xffffffff) {
+			for (int i = number.length() + 0xffffffff; i > exp; i += 0xffffffff) {
 				if (number.charAt(i) == '1') {
-					return ~bias + 1 + i;
+					return i + ~exp + 1;
 				}
 			}
 		}
 		return 0;
 	}
 	
+	private static String cutFractTail(String number, int exp, int fractgigitsnum) {
+		if (fractgigitsnum > 0) {
+			for (int i = number.length() + 0xffffffff; i > 0xffffffff; i += 0xffffffff) {
+				if (number.charAt(i) == '1') {
+					return number.substring(0, i+1);
+				}
+			}
+		} else {
+			int diff = exp + ~number.length() + 2;
+			if (diff < 0) {
+				return number.substring(0, number.length() + diff);
+			}	
+		}	
+		return number;
+	}
+	
 	public static void main(String[] args) {
-		MiniMath.innerMult(2, 15);
-		long test = 10000l;
-		test += Long.MAX_VALUE << 1;
-		
-		System.out.println((test >>> 1) == ((Long.MAX_VALUE/2) + 5000l));
-		System.out.println((test));
-		System.out.println((Long.MAX_VALUE/2) + 5000l);
+		//MiniMath.innerMult(2, 15);
+		System.out.println(innerMult(Double.parseDouble(Long.toString(Long.MAX_VALUE)), 5));
+		System.out.println(Long.MAX_VALUE);
+		System.out.println(Double.parseDouble(Long.toString(Long.MAX_VALUE)));
+		System.out.println(cutFractTail("11000", 2, 0));
 		/*
 		System.out.println(Long.toBinaryString(Double.doubleToLongBits(1)));
 		System.out.println(Long.toBinaryString(Double.doubleToLongBits(2)));
@@ -222,7 +218,7 @@ public class MiniMath {
 		System.out.println(Long.toBinaryString(Double.doubleToLongBits(0.875)));
 		//System.out.println(Long.toBinaryString(Double.doubleToLongBits(0.0625)));
 		*/
-		System.out.println(Double.toHexString(1.25));
+		//System.out.println(Double.toHexString(1.25));
 		//MiniMath.pow(5, 4.9);
 	}
 }
