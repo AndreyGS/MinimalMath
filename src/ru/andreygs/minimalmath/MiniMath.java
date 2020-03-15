@@ -25,6 +25,10 @@ public class MiniMath {
 	}
 	
 	public static Double pow(double number, double power) {
+		if (number == 1) return number;
+		else if (power == 0) return 1.0;
+		else if (number == 0) return 0.0;
+		
 		SlashedDouble sdnum = new SlashedDouble(number);
 		SlashedDouble sdpow = new SlashedDouble(power, true);
 		
@@ -39,7 +43,6 @@ public class MiniMath {
 				result = innerMult(number, result, "");
 			}
 			result = innerMult(result, result, "");
-			out.println(result.getIEEE754());
 		}
 		if ((ipwr & 1) == 1) {
 			result = innerMult(number, result, "");
@@ -79,14 +82,9 @@ public class MiniMath {
 		}
 
 		int biasresult = 0; 
-		if (number1.getIEEE754() == 9344.147732546124) {
-			out.println(num2raw);
-		}
+
 		for (int i = num2raw.length() + 0xffffffff, shift = 0, check, spaceneed, leadzeroes; i > 0xffffffff; i+= 0xffffffff, shift++) {
 			if (num2raw.charAt(i) == '1') {
-				if (number1.getIEEE754() == 9344.147732546124) {
-					out.println(Long.toBinaryString(unit));
-				}
 				leadzeroes = Long.numberOfLeadingZeros(unit);
 				check = leadzeroes + ~shift;
 				if (check > 0) {
@@ -102,11 +100,6 @@ public class MiniMath {
 						spaceneed = ~check + 1;
 						result >>>= spaceneed;
 						biasresult += spaceneed;
-						if (number1.getIEEE754() == 9344.147732546124) {
-							out.println("?");
-							out.println(spaceneed);
-							out.println(Long.toBinaryString(result));
-						}
 					}
 					//10010010000000001001011101000111001100110101100010100010101100
 					//100100100000000010010111010001110011001101011000101000101011000
@@ -143,19 +136,15 @@ public class MiniMath {
 					}
 					*/
 				}
-				if (number1.getIEEE754() == 9344.147732546124) {
-					out.println(shift);
-					out.println(Long.toBinaryString(unit) + "!");
-					out.println(biasresult);
-				}
 				result += unit;
 				shift = 0;
 			}
 		}
 		String mantissa = Long.toBinaryString(result);
 		int resultexp = getExponent(mantissa, number1.getExp(), number2.getExp(), number1.getBinaryRaw(), number2.getBinaryRaw(), biasresult);
-		
-		return new SlashedDouble(mantissa, resultexp, negativesign, result);
+		//out.println(getIEEE754(mantissa, resultexp, false));
+		SlashedDouble sd = new SlashedDouble(mantissa, resultexp, negativesign, result);
+		return sd;
 	}
 	
 	private static int getExponent(String fraction, int startexp1, int startexp2, String num1raw, String num2raw, int biasresult) {
@@ -172,9 +161,91 @@ public class MiniMath {
 		//double d1 = Math.random()*100, d2 = Math.floor(Math.random()*100);
 		//System.out.println(d1);
 		//System.out.println(d2);
-		//System.out.println(pow(d1, d2));
-		//System.out.println(Math.pow(d1, d2));
+		//System.out.println(pow(36.408808470482136, 23.0));
+		//System.out.println(Math.pow(36.408808470482136, 23.0));
+		/*
+		out.println(mult(4093215996289808.0, 36.408808470482136));
+		out.println(4093215996289808.0 * 36.408808470482136);
+		
+		double d1 = Math.random()*100, d2 = Math.floor(Math.random()*100);
+		System.out.println(d1);
+		System.out.println(d2);
+			System.out.println(pow(d1, d2));
+			System.out.println(Math.pow(d1, d2));
+		
 		System.out.println(pow(96.66513193776815, 21.0));
 		System.out.println(Math.pow(96.66513193776815, 21.0));
+		*/
+		for (int i = 0; i < 10; i++) {
+			double d1 = Math.random()*1, d2 = Math.floor(Math.random()*100);
+			System.out.println(d1 + ";;;" + d2);
+			System.out.println(pow(d1, d2));
+			System.out.println(Math.pow(d1, d2));
+		}
+		out.println(Math.pow(0,0));
+	}
+	
+	
+	
+	
+	
+	public static String getStringIEEE754(String number, int exp, boolean isnegative) {
+		String ieee754;
+		if (isnegative) ieee754 = "1";
+		else ieee754 = "0";
+		exp += 1023;
+		ieee754 += Integer.toBinaryString(exp) + number.substring(1);
+		if (ieee754.length() < 64) {
+			for (int i = ieee754.length(); i < 64; i++) {
+				ieee754 += "0";
+			}
+		} else {
+			ieee754 = ieee754.substring(0, 64);
+		}
+		return ieee754;	
+	}
+	
+	public static double getIEEE754(String number, int exp) {
+		return getIEEE754(number, exp, false);	
+	}
+	
+	public static double getIEEE754(String number, int exp, boolean isnegative) {
+		if (number.indexOf('1') == 0xffffffff && exp == 0) return 0.0;
+		String ieee754 = "";
+		if (isnegative) ieee754 = "-";
+		ieee754 += "0x1." + fromBinaryToHex(number.substring(1)) + "p" + exp;
+		return Double.valueOf(ieee754);	
+	}
+	
+	public static String fromBinaryToHex(String number) {
+		if (number.equals("")) return "0";
+		String raw = "", digit;
+		if (number.length() < 52) {
+			for (int i = number.length(); i % 4 != 0; i++) {
+				number += "0";
+			}
+		}
+		for (int i = 0; i < 52 && i < number.length(); i += 4) {
+			digit = number.substring(i, i+4);
+			switch(digit) {
+				case "0000": raw += "0"; break;
+				case "0001": raw += "1"; break;
+				case "0010": raw += "2"; break;
+				case "0011": raw += "3"; break;
+				case "0100": raw += "4"; break;
+				case "0101": raw += "5"; break;
+				case "0110": raw += "6"; break;
+				case "0111": raw += "7"; break;
+				case "1000": raw += "8"; break;
+				case "1001": raw += "9"; break;
+				case "1010": raw += "a"; break;
+				case "1011": raw += "b"; break;
+				case "1100": raw += "c"; break;
+				case "1101": raw += "d"; break;
+				case "1110": raw += "e"; break;
+				default: raw += "f"; break;
+			}
+		}
+		return raw;
 	}
 }

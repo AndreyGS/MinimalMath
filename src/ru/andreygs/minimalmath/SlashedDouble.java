@@ -96,7 +96,7 @@ public class SlashedDouble {
 				raw += "0";
 			}
 		}
-		for (int i = 0; i < 52; i += 4) {
+		for (int i = 0; i < 52 && i < raw.length(); i += 4) {
 			digit = raw.substring(i, i+4);
 			switch(digit) {
 				case "0000": hexraw += "0"; break;
@@ -157,7 +157,11 @@ public class SlashedDouble {
 				if (raw.charAt(53) == '1') {
 					long chunk = Long.valueOf(raw.substring(1,53), 2);
 					chunk++;
-					roundedbin = Long.toBinaryString(chunk);
+					//System.out.println(raw);
+					roundedbin = "";
+					for (int i = 1; raw.charAt(i) == '0'; i++) roundedbin += "0";
+					roundedbin += Long.toBinaryString(chunk);
+					//System.out.println(roundedbin);
 				} else {
 					roundedbin = raw.substring(1,53);
 				}
@@ -236,7 +240,7 @@ public class SlashedDouble {
 					fractraw += '0';
 				}
 			} else {
-				fractraw = "0000000000000000000000000000000000000000000000000000000000000000";
+				fractraw = "";
 			}
 			
 		}
