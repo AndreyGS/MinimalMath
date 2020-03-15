@@ -39,6 +39,7 @@ public class MiniMath {
 				result = innerMult(number, result, "");
 			}
 			result = innerMult(result, result, "");
+			out.println(result.getIEEE754());
 		}
 		if ((ipwr & 1) == 1) {
 			result = innerMult(number, result, "");
@@ -78,9 +79,14 @@ public class MiniMath {
 		}
 
 		int biasresult = 0; 
-
+		if (number1.getIEEE754() == 9344.147732546124) {
+			out.println(num2raw);
+		}
 		for (int i = num2raw.length() + 0xffffffff, shift = 0, check, spaceneed, leadzeroes; i > 0xffffffff; i+= 0xffffffff, shift++) {
 			if (num2raw.charAt(i) == '1') {
+				if (number1.getIEEE754() == 9344.147732546124) {
+					out.println(Long.toBinaryString(unit));
+				}
 				leadzeroes = Long.numberOfLeadingZeros(unit);
 				check = leadzeroes + ~shift;
 				if (check > 0) {
@@ -96,8 +102,15 @@ public class MiniMath {
 						spaceneed = ~check + 1;
 						result >>>= spaceneed;
 						biasresult += spaceneed;
+						if (number1.getIEEE754() == 9344.147732546124) {
+							out.println("?");
+							out.println(spaceneed);
+							out.println(Long.toBinaryString(result));
+						}
 					}
-					
+					//10010010000000001001011101000111001100110101100010100010101100
+					//100100100000000010010111010001110011001101011000101000101011000
+					//100100100000000010010111010001110011001101011000101000101011000
 					/*
 					// this is a unnecessary rounding codition, but in some cases it can bring
 					// some additionally accuracy
@@ -130,12 +143,18 @@ public class MiniMath {
 					}
 					*/
 				}
+				if (number1.getIEEE754() == 9344.147732546124) {
+					out.println(shift);
+					out.println(Long.toBinaryString(unit) + "!");
+					out.println(biasresult);
+				}
 				result += unit;
 				shift = 0;
 			}
 		}
 		String mantissa = Long.toBinaryString(result);
 		int resultexp = getExponent(mantissa, number1.getExp(), number2.getExp(), number1.getBinaryRaw(), number2.getBinaryRaw(), biasresult);
+		
 		return new SlashedDouble(mantissa, resultexp, negativesign, result);
 	}
 	
@@ -145,16 +164,17 @@ public class MiniMath {
 	}
 	
 	public static void main(String[] args) {
-		System.out.println(Double.toHexString(1));
-		System.out.println(Double.toHexString(0));
-		System.out.println(pow(234.532, 40));
-		System.out.println(Math.pow(234.532, 40));
+		//System.out.println(Double.toHexString(1));
+		//System.out.println(Double.toHexString(0));
+		//System.out.println(pow(234.532, 40));
+		//System.out.println(Math.pow(234.532, 40));
 		
-		for (int i = 0; i < 10; i++) {
-			double d1 = Math.random()*100, d2 = Math.floor(Math.random()*100);
-			
-			System.out.println(pow(d1, d2));
-			System.out.println(Math.pow(d1, d2));
-		}
+		//double d1 = Math.random()*100, d2 = Math.floor(Math.random()*100);
+		//System.out.println(d1);
+		//System.out.println(d2);
+		//System.out.println(pow(d1, d2));
+		//System.out.println(Math.pow(d1, d2));
+		System.out.println(pow(96.66513193776815, 21.0));
+		System.out.println(Math.pow(96.66513193776815, 21.0));
 	}
 }
