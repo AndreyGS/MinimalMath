@@ -2,6 +2,9 @@ package ru.andreygs.minimalmath;
 
 import static java.lang.System.*;
 
+import java.util.regex.Pattern;
+import java.util.regex.Matcher;
+
 public class MiniMath {
 	private static int[] intPwr = 
 	{
@@ -143,12 +146,18 @@ public class MiniMath {
 		String mantissa = Long.toBinaryString(result);
 		int resultexp = getExponent(mantissa, number1.getExp(), number2.getExp(), number1.getBinaryRaw(), number2.getBinaryRaw(), biasresult);
 		//out.println(getIEEE754(mantissa, resultexp, false));
+		out.println(resultexp);
 		SlashedDouble sd = new SlashedDouble(mantissa, resultexp, negativesign, result);
 		return sd;
 	}
 	
 	private static int getExponent(String fraction, int startexp1, int startexp2, String num1raw, String num2raw, int biasresult) {
 		int fractdigitsnum = num1raw.length() + num2raw.length() + 0xfffffffe;
+		out.println(fraction.length());
+		out.println(~fractdigitsnum);
+		out.println(startexp1);
+		out.println(startexp2);
+		out.println(biasresult);
 		return fraction.length() + ~fractdigitsnum + startexp1 + startexp2 + biasresult;
 	}
 	
@@ -175,7 +184,7 @@ public class MiniMath {
 		
 		System.out.println(pow(96.66513193776815, 21.0));
 		System.out.println(Math.pow(96.66513193776815, 21.0));
-		*/
+		*//*
 		for (int i = 0; i < 10; i++) {
 			double d1 = Math.random()*1, d2 = Math.floor(Math.random()*100);
 			System.out.println(d1 + ";;;" + d2);
@@ -183,6 +192,42 @@ public class MiniMath {
 			System.out.println(Math.pow(d1, d2));
 		}
 		out.println(Math.pow(0,0));
+		*/
+		
+		out.println(Double.longBitsToDouble(Long.parseUnsignedLong("1111111111110000000000001000000000000000100100000100000000000000", 2)));
+		out.println(Long.toBinaryString(Double.doubleToLongBits(-1.0)));
+		//1 011111111110000000000000000000000000000000000000000000000000000
+		out.println(Long.toBinaryString(Double.doubleToLongBits(Double.MAX_EXPONENT)));
+		//0 100 0000 1000 1111111110000000000000000000000000000000000000000000
+		out.println(Long.toBinaryString(Double.doubleToLongBits(Double.MAX_VALUE)));
+		//0 111 1111 1110 1111111111111111111111111111111111111111111111111111
+		out.println(Integer.valueOf("11111111110", 2));
+		
+		//out.println(Double.valueOf(0x1.0p+1024));
+		out.println(Long.toBinaryString(Double.doubleToLongBits(Double.MIN_EXPONENT)));
+		out.println(Long.toBinaryString(Double.doubleToLongBits(Double.MIN_NORMAL)));
+		out.println(Long.toBinaryString(Double.doubleToRawLongBits(Double.MIN_VALUE)));
+		
+		// Infinity 	0 11111111111 0000000000000000000000000000000000000000000000000000
+		// -Infinity	1 11111111111 0000000000000000000000000000000000000000000000000000
+		// signalNaN	0 11111111111 0000000000000000000000000000000000000000000000000001
+		// quietNaN		0 11111111111 1000000000000000000000000000000000000000000000000001
+		// NaN			* 11111111111 ****************************************************
+		// all those uphere are NaNs except these Infinities
+		
+		Pattern p = Pattern.compile("[01]+");
+		Matcher m = p.matcher("asdasd0001111000qweqwe");
+		m.find();
+		System.out.println(m.group());
+		
+		out.println(Double.valueOf(0x1.0p-1043));
+		out.println(Double.valueOf(0x1.0p-10));
+		out.println(mult(Double.valueOf(0x1.fadp-1043),Double.valueOf(0x1.0p-1)) + "!!!");
+		out.println((Double.valueOf(0x1.fadp-1043)*Double.valueOf(0x1.0p-1)) + "!!!");
+		out.println(Double.toHexString(0x1.0p-1043));
+		out.println(0xfffffc02);
+		//out.println(Long.toBinaryString(Double.doubleToLongBits(Double.valueOf(0x1.0p-10))));
+		
 	}
 	
 	

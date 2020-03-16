@@ -1,5 +1,8 @@
 package ru.andreygs.minimalmath;
 
+import java.util.regex.Pattern;
+import java.util.regex.Matcher;
+
 public class SlashedDouble {
 	
 	private String negativesign;
@@ -42,8 +45,8 @@ public class SlashedDouble {
 		this.negativesign = negativesign;
 	}
 	
-	public SlashedDouble(String raw, Integer exp, String negativesign) {
-		this.raw = raw;
+	public SlashedDouble(String raw, Integer exp, String negativesign) throws NumberFormatException {
+		this.raw = fetchRaw(raw);
 		this.exp = exp;
 		this.negativesign = negativesign;
 	}
@@ -51,6 +54,14 @@ public class SlashedDouble {
 	public SlashedDouble(String raw, Integer exp, String negativesign, Long mantissa) {
 		this(raw, exp, negativesign);
 		this.mantissa = mantissa;
+		System.out.println(raw);
+	}
+	
+	public static String fetchRaw(String raw) {
+		Pattern p = Pattern.compile("[01]+");
+		Matcher m = p.matcher(raw);
+		m.find();
+		return m.group();
 	}
 	
 	private void slashIt() {
@@ -58,8 +69,19 @@ public class SlashedDouble {
 		if (stripes[0].charAt(0) == '-') negativesign = "";
 		else negativesign = "";
 		roundedhex = stripes[1];
-		raw = "1" + cutFractTail(fromHexToBinary(roundedhex));
-		exp = Integer.valueOf(stripes[2]);
+		raw = cutFractTail(fromHexToBinary(roundedhex));
+		if (stripes[0].charAt(stripes[0].length() + 0xffffffff) == '0') {
+			for (int i = 0; i < raw.length(); i++) {
+				if (raw.charAt(i) == '1') {
+					this.exp = Integer.valueOf(stripes[2]) + ~i;
+					break;
+				}
+			}
+			raw = raw.substring(raw.indexOf('1'));
+		} else {
+			exp = Integer.valueOf(stripes[2]);
+			raw = "1" + raw;
+		}
 	}
 	
 	private static String fromHexToBinary(String hexraw) {
@@ -157,11 +179,9 @@ public class SlashedDouble {
 				if (raw.charAt(53) == '1') {
 					long chunk = Long.valueOf(raw.substring(1,53), 2);
 					chunk++;
-					//System.out.println(raw);
 					roundedbin = "";
 					for (int i = 1; raw.charAt(i) == '0'; i++) roundedbin += "0";
 					roundedbin += Long.toBinaryString(chunk);
-					//System.out.println(roundedbin);
 				} else {
 					roundedbin = raw.substring(1,53);
 				}
@@ -180,15 +200,28 @@ public class SlashedDouble {
 		if (ieee754bin == null) {
 			if (negativesign == "-") ieee754bin = "1";
 			else ieee754bin = "0";
-			ieee754bin += Integer.toBinaryString(exp + 1023) + roundingToDoubleRaw();
+			int resultexp = exp + 1023;
+			if (resultexp > 2046) {
+				ieee754bin += Integer.toBinaryString(resultexp) + "0000000000000000000000000000000000000000000000000000"; // +-Infinity
+			} else if (resultexp > 0) {
+				ieee754bin += Integer.toBinaryString(resultexp) + roundingToDoubleRaw(); // normal numbers
+			} else if (resultexp > 0xffffffcc) {
+				ieee754bin += "00000000000" + roundingToDoubleRaw(); // denormal numbers
+			} else {
+				ieee754bin += "000000000000000000000000000000000000000000000000000000000000000"; // sub-denormal = 0
+			}
 		}
 		return ieee754bin;	
 	}
 	
 	public String getDoubleHexRaw() {
 		if (ieee754hex == null) {
-			if (getDoubleRaw().indexOf('1') == 0xffffffff && exp == 0) {
-				ieee754hex = "0x0.0p0";
+			if (getDoubleRaw().indexOf('1') == 0xffffffff) {
+				if 	(exp == 0 || exp  < 0xfffffc02) { // if it's '0' or below minimum
+					ieee754hex = negativesign + "0x0.0p0";
+				} else {
+					
+				}
 			} else {
 				ieee754hex = negativesign + "0x1." + getRoundedHex() + "p" + exp;
 			}
