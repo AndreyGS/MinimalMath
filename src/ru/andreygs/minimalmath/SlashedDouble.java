@@ -45,6 +45,13 @@ public class SlashedDouble {
 		this.negativesign = negativesign;
 	}
 	
+	public SlashedDouble(Long mantissa, Integer exp, String negativesign, boolean additionalslicing) {
+		this(mantissa, exp, negativesign);
+		this.raw = cutFractTail(Long.toBinaryString(mantissa));
+		getIntRaw();
+		getFractRaw();
+	}
+	
 	public SlashedDouble(String raw, Integer exp, String negativesign) throws NumberFormatException {
 		this.raw = fetchRaw(raw);
 		this.exp = exp;
@@ -54,22 +61,25 @@ public class SlashedDouble {
 	public SlashedDouble(String raw, Integer exp, String negativesign, Long mantissa) {
 		this(raw, exp, negativesign);
 		this.mantissa = mantissa;
-		System.out.println(raw);
 	}
 	
 	public static String fetchRaw(String raw) {
 		Pattern p = Pattern.compile("[01]+");
 		Matcher m = p.matcher(raw);
 		m.find();
+		
 		return m.group();
 	}
 	
 	private void slashIt() {
 		String[] stripes = Double.toHexString(number).split("[.p]");
-		if (stripes[0].charAt(0) == '-') negativesign = "";
+		
+		if (stripes[0].charAt(0) == '-') negativesign = "-";
 		else negativesign = "";
+		
 		roundedhex = stripes[1];
 		raw = cutFractTail(fromHexToBinary(roundedhex));
+
 		if (stripes[0].charAt(stripes[0].length() + 0xffffffff) == '0') {
 			for (int i = 0; i < raw.length(); i++) {
 				if (raw.charAt(i) == '1') {
@@ -86,8 +96,10 @@ public class SlashedDouble {
 	
 	private static String fromHexToBinary(String hexraw) {
 		String raw = "";
+		
 		for (int i = 0; i < hexraw.length(); i++) {
 			char digit = hexraw.charAt(i);
+			
 			switch(digit) {
 				case '0': raw += "0000"; break;
 				case '1': raw += "0001"; break;
@@ -107,19 +119,24 @@ public class SlashedDouble {
 				default: raw += "1111"; break;
 			}
 		}
+		
 		return raw;
 	}
 	
 	public static String fromBinaryToHex(String raw) {
 		if (raw.equals("")) return "0";
+		
 		String hexraw = "", digit;
+		
 		if (raw.length() < 52) {
 			for (int i = raw.length(); i % 4 != 0; i++) {
 				raw += "0";
 			}
 		}
+		
 		for (int i = 0; i < 52 && i < raw.length(); i += 4) {
 			digit = raw.substring(i, i+4);
+			
 			switch(digit) {
 				case "0000": hexraw += "0"; break;
 				case "0001": hexraw += "1"; break;
@@ -139,6 +156,7 @@ public class SlashedDouble {
 				default: hexraw += "f"; break;
 			}
 		}
+		
 		return hexraw;
 	}
 	
@@ -148,13 +166,15 @@ public class SlashedDouble {
 				return raw.substring(0, i+1);
 			}
 		}
-		return raw;
+		
+		return "";
 	}
 	
 	public Long getLongMantissa() {
 		if (mantissa == null) {
 			mantissa = Long.valueOf(raw, 2);
 		}
+		
 		return mantissa;
 	}
 	
@@ -170,6 +190,7 @@ public class SlashedDouble {
 		if (roundedhex == null) {
 			roundedhex = fromBinaryToHex(roundedbin);
 		}
+		
 		return roundedhex;
 	}
 	
@@ -200,7 +221,9 @@ public class SlashedDouble {
 		if (ieee754bin == null) {
 			if (negativesign == "-") ieee754bin = "1";
 			else ieee754bin = "0";
+			
 			int resultexp = exp + 1023;
+			
 			if (resultexp > 2046) {
 				ieee754bin += Integer.toBinaryString(resultexp) + "0000000000000000000000000000000000000000000000000000"; // +-Infinity
 			} else if (resultexp > 0) {
@@ -211,6 +234,7 @@ public class SlashedDouble {
 				ieee754bin += "000000000000000000000000000000000000000000000000000000000000000"; // sub-denormal = 0
 			}
 		}
+		
 		return ieee754bin;	
 	}
 	
@@ -226,6 +250,7 @@ public class SlashedDouble {
 				ieee754hex = negativesign + "0x1." + getRoundedHex() + "p" + exp;
 			}
 		}
+		
 		return ieee754hex;
 	}
 	
@@ -233,17 +258,21 @@ public class SlashedDouble {
 		if (number == null) {
 			number = Double.valueOf(getDoubleHexRaw());
 		}
+		
 		return number;	
 	}
 	
 	public Integer onesEnum() {
 		if (onesnum == null) {
 			int counter = 0;
+			
 			for (int i = 0; i < getBinaryRaw().length(); i++) {
 				if (raw.charAt(i) == '1') counter++;
 			}
+			
 			onesnum = counter;
 		}
+		
 		return onesnum;
 	}
 	
@@ -256,22 +285,22 @@ public class SlashedDouble {
 					intraw = raw.substring(0, exp+1);
 				} else {
 					intraw = raw;
+					
 					for (int i = intraw.length(); i < 64 && i <= exp; i++) {
 						intraw += '0';
 					}
 				}
 			}
 		}
+		
 		return intraw;
 	}
 	
 	public String getFractRaw() {
 		if (fractraw == null) {
+			
 			if (getIntRaw().length() < raw.length()) {
 				fractraw = raw.substring(getIntRaw().length());
-				for (int i = fractraw.length(); i < 64; i++) {
-					fractraw += '0';
-				}
 			} else {
 				fractraw = "";
 			}
@@ -284,6 +313,7 @@ public class SlashedDouble {
 		if (intmantissalong == null) {
 			intmantissalong = Long.valueOf(intraw, 2);
 		}
+		
 		return intmantissalong;
 	}
 	
@@ -295,6 +325,7 @@ public class SlashedDouble {
 				intmantissaint = Integer.valueOf(intraw, 2);
 			}
 		}
+		
 		return intmantissaint;
 	}
 	
@@ -302,15 +333,20 @@ public class SlashedDouble {
 		if (fractmantissa == null) {
 			fractmantissa = Long.valueOf(fractraw, 2);
 		}
+		
 		return fractmantissa;
 	}
 	
 	public boolean isNegative() {
-		if (negativesign == "-") return true;
+		if (negativesign.equals("-")) return true;
 		else return false;
 	}
 	
+	public String getNegativeSign() {
+		return negativesign;
+	}
+	
 	public void setSign(String sign) {
-		if (sign == "" || sign == "-") negativesign = sign;
+		if (sign.equals("") || sign.equals("-")) negativesign = sign;
 	}
 }
