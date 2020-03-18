@@ -138,6 +138,8 @@ public class MiniMath {
 	}
 	
 	private static SlashedDouble innerMult(SlashedDouble number1, SlashedDouble number2, String negativesign) {
+		out.println(number1.getIEEE754() + "```");
+		out.println(number2.getIEEE754() + "~~~");
 		long result = 0l, unit;
 		String num2raw;
 		if (number1.onesEnum() < number2.onesEnum()) {
@@ -175,7 +177,9 @@ public class MiniMath {
 		}
 		String mantissa = Long.toBinaryString(result);
 		int resultexp = getMultExponent(mantissa, number1.getExp(), number2.getExp(), number1.getBinaryRaw(), number2.getBinaryRaw(), biasresult);
-		return new SlashedDouble(mantissa, resultexp, negativesign, result);
+		SlashedDouble sd = new SlashedDouble(mantissa, resultexp, negativesign, result);
+		out.println(sd.getIEEE754() + "@@");
+		return sd;
 	}
 	
 	private static int getMultExponent(String fraction, int exp1, int exp2, String num1raw, String num2raw, int biasresult) {
@@ -197,13 +201,17 @@ public class MiniMath {
 		SlashedDouble result = new SlashedDouble(1.0);
 		for (int i = 0xffffffff; i > degreeexp; i--) {
 			number = innerRoot(number);
+			out.println(number.getIEEE754());
 		} 
 		for (int i = 0, counter = 1; i < degreeraw.length(); i++, counter++) {
 			number = innerRoot(number);
+			out.println(number.getIEEE754());
 			if (degreeraw.charAt(i) == '1') {
 				result = innerMult(number, result, "");
+				out.println(number.getIEEE754());
 			}
 		}
+		out.println(result.getIEEE754());
 		return result;
 	}
 	
@@ -328,7 +336,7 @@ public class MiniMath {
 		//out.println(pow(15, 0.5));
 		long l1 = Long.parseUnsignedLong("1111111111111111111111111111111111111111111111111111111111111111",2),
 			l2 = Long.parseLong("-011111111111111111111111111111111111111111111111111111111111110",2);
-		out.println(l1-l2);
+		//out.println(l1-l2);
 		
 		SlashedDouble sd = new SlashedDouble(4.0, true);
 		
@@ -343,15 +351,26 @@ public class MiniMath {
 				out.println(result2);
 			*/
 			
+		double number = 23423;
+		double result1 = pow(2342332234234l, 0.75), result2 = Math.pow(2342332234234l, 0.75);
+		out.println(result1);
+		out.println(result2);
+		
+		//out.println(mult(1237.1208424536674, 1530467.9788332717));
+		//out.println(1237.1208424536674 * 1530467.9788332717);
+			/*
 		for (int i = 0; i < 1000; i++) {
-			double num = Math.random()*10000, power = Math.floor(Math.random()*50);
+			double num = Math.random()*1000, power = Math.random()*50;
+			power = power - Math.floor(power);
 			if (i % 2 == 0) num = -num;
 			double result1 = pow(num, power), result2 = Math.pow(num, power);
 			if (result1 != result2) {
+				out.println(num + "!");
+				out.println(power);
 				out.println(result1);
 				out.println(result2);
 			}
-		}
+		}*/
 	}
 	
 
