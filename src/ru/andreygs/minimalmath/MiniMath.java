@@ -44,11 +44,13 @@ public class MiniMath {
 		
 		SlashedDouble sdnum = new SlashedDouble(number);
 		SlashedDouble sdpow = new SlashedDouble(power, true);
-
+		if (sdpow.getFractRaw().length() > 0 && number < 0) return Double.NaN;
+		
 		SlashedDouble ipwr;
 		
 		if (sdpow.getIntRaw().length() > 0) {
 			ipwr = intPower(sdnum, sdpow);
+			if (ipwr.isDone()) return ipwr.getIEEE754();
 		} else {
 			ipwr = new SlashedDouble(1.0);
 		}
@@ -58,14 +60,16 @@ public class MiniMath {
 		SlashedDouble fpwr;
 		
 		if (sdpow.getFractRaw().length() > 0) {
-			if (number < 0) return Double.NaN;
 			fpwr = fractPower(sdnum, sdpow);
 		} else {
 			fpwr = new SlashedDouble(1.0);
 		}
 		
-		if (fpwr.getIEEE754() == Double.POSITIVE_INFINITY || fpwr.getIEEE754() == Double.NEGATIVE_INFINITY)
+		if (fpwr.getIEEE754() == Double.POSITIVE_INFINITY || fpwr.getIEEE754() == Double.NEGATIVE_INFINITY || fpwr.getIEEE754() == Double.NaN || ipwr.getIEEE754() == 1.0) {
 			return fpwr.getIEEE754();
+		} else if (fpwr.getIEEE754() == 1.0) {
+			return ipwr.getIEEE754();
+		}
 			
 		return innerMult(ipwr, fpwr, ipwr.getNegativeSign()).getIEEE754();
 	}
@@ -82,17 +86,33 @@ public class MiniMath {
 		for (int i = 0; i < intPwr.length; i++) {
 			if ((ipwr & intPwr[i]) == intPwr[i]) {
 				result = innerMult(number, result, "");
+				//out.println(result.getIEEE754());
+				if (result.isDone()) {
+					if (isNegative(number, power)) return new SlashedDouble(-number.getIEEE754(), 1);
+					return result;
+				}
 			}
 			result = innerMult(result, result, "");
+			if (result.isDone()) {
+				if (isNegative(number, power)) return new SlashedDouble(-number.getIEEE754(), 1);
+				return result;
+			}
+			//out.println(result.getIEEE754());
 		}
 		
 		if ((ipwr & 1) == 1) {
 			result = innerMult(number, result, "");
 		}
 
-		if (number.isNegative() && (ipwr % 2 == 1))	result.setSign("-");
+		if (isNegative(number, power)) result.setSign("-");
 		
 		return result;
+	}
+	
+	private static boolean isNegative(SlashedDouble number, SlashedDouble power) {
+		if (number.isNegative() && power.onesEnum() % 2 == 1) return true;
+		
+		return false;
 	}
 	
 	public static Double mult(double number1, double number2) {
@@ -138,10 +158,9 @@ public class MiniMath {
 	}
 	
 	private static SlashedDouble innerMult(SlashedDouble number1, SlashedDouble number2, String negativesign) {
-		out.println(number1.getIEEE754() + "```");
-		out.println(number2.getIEEE754() + "~~~");
 		long result = 0l, unit;
 		String num2raw;
+		
 		if (number1.onesEnum() < number2.onesEnum()) {
 			unit = number2.getLongMantissa();
 			num2raw = number1.getBinaryRaw();
@@ -149,25 +168,37 @@ public class MiniMath {
 			unit = number1.getLongMantissa();
 			num2raw = number2.getBinaryRaw();
 		}
-
+		
 		int biasresult = 0; 
 
-		for (int i = num2raw.length() + 0xffffffff, shift = 0, check, spaceneed, leadzeroes; i > 0xffffffff; i+= 0xffffffff, shift++) {
+		for (int i = num2raw.length() + 0xffffffff, shift = 0, check, spaceneed, leadzeroes, carry; i > 0xffffffff; i+= 0xffffffff, shift++) {
+			String test;
 			if (num2raw.charAt(i) == '1') {
 				leadzeroes = Long.numberOfLeadingZeros(unit);
 				check = leadzeroes + ~shift;
-				if (check > 0) {
+				if (check > 0xffffffff) {
 					unit <<= shift;
 				} else {
+					carry = 0;
 					if (leadzeroes == 0) {
 						unit >>>= 1;
+						unit++;
 						spaceneed = ~check + 1;
-						if (result > 0) result >>>= 1;
+						if (result > 0) {
+							if (Long.numberOfTrailingZeros(result) == 0) carry = 1;
+							result >>>= 1;
+							result += carry;
+						}
 						biasresult += shift + 1;
 					} else {
 						unit <<= leadzeroes + 0xffffffff;
 						spaceneed = ~check + 1;
+						test = Long.toBinaryString(result);
+						if (test.length() >= spaceneed) {
+							if (test.charAt(test.length()+check) == '1') carry = 1;
+						}
 						result >>>= spaceneed;
+						result += carry;
 						biasresult += spaceneed;
 					}
 				}
@@ -177,9 +208,19 @@ public class MiniMath {
 		}
 		String mantissa = Long.toBinaryString(result);
 		int resultexp = getMultExponent(mantissa, number1.getExp(), number2.getExp(), number1.getBinaryRaw(), number2.getBinaryRaw(), biasresult);
-		SlashedDouble sd = new SlashedDouble(mantissa, resultexp, negativesign, result);
-		out.println(sd.getIEEE754() + "@@");
-		return sd;
+		if (resultexp == 0 && 
+			((number1.getBinaryRaw().length() > 62 && number1.getBinaryRaw().substring(0, 63).equals( "111111111111111111111111111111111111111111111111111111111111111")) || (number2.getBinaryRaw().length() > 62 && number2.getBinaryRaw().substring(0, 62).equals( "111111111111111111111111111111111111111111111111111111111111111")))) {
+			if (negativesign.equals("-")) return new SlashedDouble(-1.0, 1);
+			else return new SlashedDouble(1.0, 1); 
+		} else if (resultexp > 1024) {
+			if (negativesign.equals("-")) return new SlashedDouble(Double.NEGATIVE_INFINITY, 1);
+			else return new SlashedDouble(Double.POSITIVE_INFINITY, 1);
+		} else if (resultexp < -1075) {
+			if (negativesign.equals("-")) return new SlashedDouble(-0.0, 1);
+			else return new SlashedDouble(0.0, 1);
+		} else {
+			return new SlashedDouble(mantissa, resultexp, negativesign, result);
+		}
 	}
 	
 	private static int getMultExponent(String fraction, int exp1, int exp2, String num1raw, String num2raw, int biasresult) {
@@ -191,6 +232,7 @@ public class MiniMath {
 		if (exp == 0xffffffff || exp == 0x00000000) {
 			return exp;
 		} else {
+			if (exp % 2 == -1) return exp/2 + 0xffffffff;
 			return (exp/2);
 		}
 	}
@@ -201,32 +243,31 @@ public class MiniMath {
 		SlashedDouble result = new SlashedDouble(1.0);
 		for (int i = 0xffffffff; i > degreeexp; i--) {
 			number = innerRoot(number);
-			out.println(number.getIEEE754());
 		} 
 		for (int i = 0, counter = 1; i < degreeraw.length(); i++, counter++) {
 			number = innerRoot(number);
-			out.println(number.getIEEE754());
 			if (degreeraw.charAt(i) == '1') {
 				result = innerMult(number, result, "");
-				out.println(number.getIEEE754());
 			}
 		}
-		out.println(result.getIEEE754());
 		return result;
 	}
 	
 	private static SlashedDouble innerRoot(SlashedDouble number) {
 		String numraw = number.getBinaryRaw(), residualstr;
 		long minuend = 0l, subtrahend, residual;
-		if (number.getIntRaw().length() % 2 == 0) {
+		if ((number.getIntRaw().length() % 2 == 0 && number.getIntRaw().length() > 0) ||
+			(number.getIntRaw().length() == 0 && ((~number.getExp() + 1) % 2 == 1))) {
 			if (numraw.substring(0, 2).equals("10")) {
 				numraw = "01" + numraw.substring(2);
 			} else {
+				//out.println("!");
 				numraw = "10" + numraw.substring(2);
 			}
 		} else {
 			numraw = "00" + numraw.substring(1);
 		}
+		
 		Long result = 1l;
 		String subzeros = "";
 		for (int i = numraw.length(); i < 127; i++) {
@@ -251,8 +292,8 @@ public class MiniMath {
 		}
 		
 		// next "if's" are made for additional precission
+
 		result <<= 1;
-		//out.println(numraw);
 		if (numraw.charAt(60) == '1') {
 			minuend = Long.parseUnsignedLong(numraw.substring(60, 124), 2);
 			subtrahend = result << 1;
@@ -278,8 +319,8 @@ public class MiniMath {
 				result++;
 			}
 		}	
+		
 		result <<= 1;
-		//out.println(numraw);
 		if (numraw.charAt(60) == '1') {
 			minuend = Long.parseUnsignedLong(numraw.substring(60, 124), 2);
 			subtrahend = result >>> 1;
@@ -317,6 +358,7 @@ public class MiniMath {
 			}
 			residualstr = Long.toBinaryString(residual);
 		}
+		
 		result <<= 1;
 		if (numraw.charAt(60) == '1' || numraw.charAt(61) == '1' || numraw.charAt(62) == '1') {
 			result++;
@@ -327,7 +369,7 @@ public class MiniMath {
 			if (residual >= 0) {
 				result++;
 			}
-		} 
+		}
 		int resultexp = getRootExponent(number.getExp());
 		return new SlashedDouble(result, resultexp, "", true);
 	}
@@ -350,36 +392,141 @@ public class MiniMath {
 			out.println(result1);
 				out.println(result2);
 			*/
-			
+		/*	
 		double number = 23423;
-		double result1 = pow(2342332234234l, 0.75), result2 = Math.pow(2342332234234l, 0.75);
+		out.println(Long.toBinaryString(Double.doubleToLongBits(0.028132614678155754)));
+		out.println(Long.toBinaryString(Double.doubleToLongBits(0.5571573247888875)));
+		double result1 = pow(0.028132614678155754, 0.5571573247888875), result2 = Math.pow(0.028132614678155754, 0.5571573247888875);
 		out.println(result1);
 		out.println(result2);
+		*/
+		//out.println(pow(0.028132614678155754, 0.5));
+		//out.println(Math.pow(0.028132614678155754, 0.5));
+		// 1111111001 1100 1100 1110 1100 1011 1100 1111 1111 1001 0111 1111 0000 0000 number
+		// 1111111110 0001 1101 0100 0011 1011 1001 1001 0001 0110 0011 1110 0111 0000 power
 		
+		// 		    1 1100 1100 1110 1100 1011 1100 1111 1111 1001 0111 1111 raw
+		//          1 1110 0101 1100 1010 1010 0110 0010 1000 0100 0010 1010 0011 0100 00100110
+		//1111111100    0101 0111 1000 0001 1010 1100 0010 0111 0000 1100 1111 1101 1111
+		//out.println(Long.toBinaryString(Double.doubleToLongBits(0.16772779936002188)));
 		//out.println(mult(1237.1208424536674, 1530467.9788332717));
 		//out.println(1237.1208424536674 * 1530467.9788332717);
-			/*
-		for (int i = 0; i < 1000; i++) {
-			double num = Math.random()*1000, power = Math.random()*50;
-			power = power - Math.floor(power);
+		double factor = 1;
+		
+		for (int i = 0; i < 26000; i++) {
+			if (i % 1000 == 0) factor = factor / 10;
+			double num = Math.random()*1000000000000l, power = Math.random()*10000000000000.0;
+			//power = power - Math.floor(power);
 			if (i % 2 == 0) num = -num;
 			double result1 = pow(num, power), result2 = Math.pow(num, power);
-			if (result1 != result2) {
+		
+			if (result1 != result2 && (!Double.isNaN(result1) && !Double.isNaN(result1))) {
+				if (Double.toString(result1).length() < 14 || Double.toString(result2).length() < 14 || !Double.toString(result1).substring(0, 14).equals(Double.toString(result2).substring(0, 14))) {
 				out.println(num + "!");
 				out.println(power);
 				out.println(result1);
 				out.println(result2);
+				}
 			}
-		}*/
-	}
-	
+		}
+
+
+		//double db = Double.POSITIVE_INFINITY;
+		//SlashedDouble sd1 = new SlashedDouble(-db, 1);
+		//out.println(sd1.getIEEE754());
+		double result1 = pow(-6.55437551659453E11, 8.47902452279E11), result2 = Math.pow(0.00000021988872393374094, 0.964674847343474);
+		out.println(result1);
+		//out.println(result2);
+		//out.println(Long.toBinaryString(Double.doubleToLongBits(0.00000021988872393374094)));
+		//out.println(Long.toBinaryString(Double.doubleToLongBits(0.964674847343474)));
+		//1111101000 1101 1000 0011 0101 0001 1010 1011 1001 0101 1110 0010 0101 0101
+		//1111111110 1110 1101 1110 1001 1101 1100 1001 0001 0011 1010 0101 1111 1111
+		//double result1 = pow(2.7199211094562027E11, 5.675769560298457E13), result2 = Math.pow(2.7199211094562027E11, 5.675769560298457E13);
+		//out.println(innerRoot(new SlashedDouble(Long.parseUnsignedLong("1111111111111111111111111111111111111111111111111111110011100110", 2), -1, "", true)).getBinaryRaw());
+		//11111111111111111111111111111111111111111111111111111 00111001110
+		//double result1 = pow(0.9999999999999999, 0.5);
+		//0,0020548474289602383
+		//out.println(result1);
+		//out.println(result2);
+		//out.println(Long.toBinaryString(Double.doubleToLongBits(0.0020548474289602383)));
+		//out.println(Long.toBinaryString(Double.doubleToLongBits(4.315309092478779E-18)));
+		//11111111101000000000000000000000000000000000000000000000000000
+		//11111111110000000000000000000000000000000000000000000000000000
+		
+	    //1111110110 0000 1101 0101 0101 0011 1101 0000 0010 1110 0101 0001 0001 1010
+	    //1111000101 0011 1110 0110 1001 1110 0010 0101 0011 0111 1000 1100 0011 1110
+		//-59
+	}/*
+	2.7199211094562027E11!
+5.675769560298457E13
+0.0
+Infinity
+5.4789758999206104E11!
+1.0479925172062943E13
+0.0
+Infinity
+9.7585971818138E11!
+9.04096518638956E13
+0.0
+Infinity
+8.910836239509121E11!
+8.414588627461539E13
+0.0
+Infinity
+6.548181144538467E11!
+4.232912010213882E13
+0.0
+Infinity
+*/
+//0,00000021988872393374094
+	/*
+0.19623450306083257!
+8.964674847343474
+1.7408176330618385E-6
+4.570472991215036E-7
+
+*/
+/*
+0.0020548474289602383!
+4.315309092478779E-18
+0.75
+1.0
+
+
+0.08387399840840858!
+8.566001608712682E-20
+51.0
+1.0
+
+0.011144110734673774!
+3.212831640906799E-20
+43.0
+1.0
+
+
+0.07732771947689687!
+8.124689083499504E-20
+65.0
+1.0
+
+
+0.02356777008058071!
+4.186495688784098E-20
+55.0
+1.0
+
+
+0.025283644197233692!
+8.531014963104989E-20
+53.0
+1.0
+
+*/
+
 
 	
 	
-	
-	
-	
-	
+	//0,000030517578125
 	
 	
 	
