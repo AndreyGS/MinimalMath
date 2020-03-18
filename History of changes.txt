@@ -1,0 +1,10 @@
+Hisory of changes
+
+18.03.2020
+1. Finded issue in taking root processing. Succefully resolved.
+2. Testing method changed. Now it more accurate.
+3. MiniMath.innerMult(SlashedDouble number1, SlashedDouble number2) method received additional rounding instructions.
+4. Fixed issue in calculating negative root exponent.
+5. Fixed issue of rounding numbers around 1.0 (there was an overflow in MiniMath.innerMult() when number was almost full of 'ones').
+6. Fixed several other issues with holding extra small and extra large numbers.
+7. TODO fix processing of some extra large numbers.
