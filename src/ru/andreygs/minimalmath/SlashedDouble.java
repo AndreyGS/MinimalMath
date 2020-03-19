@@ -4,14 +4,23 @@ import java.util.regex.Pattern;
 import java.util.regex.Matcher;
 
 public class SlashedDouble {
+	private Double number;
 	
 	private String negativesign;
+	
 	private String raw;
+	private Long longraw;
+	
+	private String intraw;
+	private Long longintraw;
+	private Integer integerintraw;
+	
+	private String fractraw;
+	private Long longfractraw;
+	
 	private Integer exp;
 	
 	private Integer onesnum;
-	
-	private Long mantissa;
 	
 	private String roundedbin;
 	private String roundedhex;
@@ -19,24 +28,17 @@ public class SlashedDouble {
 	private String ieee754bin;
 	private String ieee754hex;
 	
-	private Double number;
-	
-	private String intraw;
-	private String fractraw;
-	
-	private Long intmantissalong;
-	private Integer intmantissaint;
-	private Long fractmantissa;
-	
 	private boolean done = false;
 	
 	public SlashedDouble(double number) {
 		this.number = number;
 		slashIt();
+
 	}
 	
 	public SlashedDouble(double number, boolean additionalslicing) {
 		this(number);
+		
 		getIntRaw();
 		getFractRaw();
 	}
@@ -45,32 +47,29 @@ public class SlashedDouble {
 		this.number = number;
 		this.done = true;
 	}
-	
-	public SlashedDouble(Long mantissa, Integer exp, String negativesign) {
-		this.mantissa = mantissa;
+
+	public SlashedDouble(Long longraw, Integer exp, String negativesign, boolean additionalslicing) {
+		this.raw = cutFractTail(Long.toBinaryString(longraw));
+		this.longraw = Long.parseUnsignedLong(this.raw, 2);
 		this.exp = exp;
 		this.negativesign = negativesign;
-	}
-	
-	public SlashedDouble(Long mantissa, Integer exp, String negativesign, boolean additionalslicing) {
-		this(mantissa, exp, negativesign);
-		this.raw = Long.toBinaryString(mantissa);
-		checkRaw();
 		
+		checkRaw();
 		getIntRaw();
 		getFractRaw();
 	}
 	
 	public SlashedDouble(String raw, Integer exp, String negativesign) throws NumberFormatException {
-		this.raw = fetchRaw(raw);
-		checkRaw();
+		this.raw = cutFractTail(fetchRaw(raw));
 		this.exp = exp;
 		this.negativesign = negativesign;
+		
+		checkRaw();
 	}
 	
-	public SlashedDouble(String raw, Integer exp, String negativesign, Long mantissa) {
+	public SlashedDouble(String raw, Integer exp, String negativesign, Long longraw) {
 		this(raw, exp, negativesign);
-		this.mantissa = mantissa;
+		this.longraw = Long.parseUnsignedLong(this.raw, 2);
 	}
 	
 	private void checkRaw() {
@@ -188,12 +187,12 @@ public class SlashedDouble {
 		return "";
 	}
 	
-	public Long getLongMantissa() {
-		if (mantissa == null) {
-			mantissa = Long.valueOf(raw, 2);
+	public Long getLongRaw() {
+		if (longraw == null) {
+			longraw = Long.valueOf(raw, 2);
 		}
 		
-		return mantissa;
+		return longraw;
 	}
 	
 	public Integer getExp() {
@@ -216,17 +215,17 @@ public class SlashedDouble {
 		if (roundedbin == null) {
 			if (raw.length() > 53) {
 				if (raw.charAt(53) == '1') {
-					/*if (raw.indexOf('0') > 52 || raw.indexOf('0') == 0xffffffff) {
+					if (raw.indexOf('0') > 52 || raw.indexOf('0') == 0xffffffff) {
 						exp++;
 						roundedbin = "0000000000000000000000000000000000000000000000000000";
 						raw = "";
-					} else {*/
+					} else {
 						long chunk = Long.valueOf(raw.substring(1,53), 2);
 						chunk++;
 						roundedbin = "";
 						for (int i = 1; raw.charAt(i) == '0'; i++) roundedbin += "0";
 						roundedbin += Long.toBinaryString(chunk);
-					//}
+					}
 				} else {
 					roundedbin = raw.substring(1,53);
 				}
@@ -253,7 +252,7 @@ public class SlashedDouble {
 				ieee754bin += Integer.toBinaryString(resultexp) + "0000000000000000000000000000000000000000000000000000"; // +-Infinity
 			} else if (resultexp > 0) {
 				ieee754bin += Integer.toBinaryString(resultexp) + roundedbin; // normal numbers
-			} else if (resultexp > 0xffffffcc) {
+			} else if (resultexp > 0xffffffcb) {
 				ieee754bin += "00000000000" + roundedbin; // denormal numbers
 			} else {
 				ieee754bin += "000000000000000000000000000000000000000000000000000000000000000"; // sub-denormal = 0
@@ -310,10 +309,6 @@ public class SlashedDouble {
 					intraw = raw.substring(0, exp+1);
 				} else {
 					intraw = raw;
-					
-					for (int i = intraw.length(); i < 64 && i <= exp; i++) {
-						intraw += '0';
-					}
 				}
 			}
 		}
@@ -333,32 +328,32 @@ public class SlashedDouble {
 		return fractraw;
 	}
 	
-	public Long getIntMantissaLong() {
-		if (intmantissalong == null) {
-			intmantissalong = Long.valueOf(intraw, 2);
+	public Long getLongIntRaw() {
+		if (longintraw == null) {
+			longintraw = Long.valueOf(intraw, 2);
 		}
 		
-		return intmantissalong;
+		return longintraw;
 	}
 	
-	public Integer getIntMantissaInteger() {
-		if (intmantissaint == null) {
+	public Integer getIntegerIntRaw() {
+		if (integerintraw == null) {
 			if (intraw.length() > 32) {
-				intmantissaint = Integer.parseUnsignedInt(intraw.substring(0, 32), 2);
+				integerintraw = Integer.parseUnsignedInt(intraw.substring(0, 30), 2);
 			} else {
-				intmantissaint = Integer.parseUnsignedInt(intraw, 2);
+				integerintraw = Integer.parseUnsignedInt(intraw, 2);
 			}
 		}
 		
-		return intmantissaint;
+		return integerintraw;
 	}
 	
-	public Long getFractMantissa() {
-		if (fractmantissa == null) {
-			fractmantissa = Long.valueOf(fractraw, 2);
+	public Long getLongFractRaw() {
+		if (longfractraw == null) {
+			longfractraw = Long.valueOf(fractraw, 2);
 		}
 		
-		return fractmantissa;
+		return longfractraw;
 	}
 	
 	public boolean isNegative() {
@@ -372,9 +367,23 @@ public class SlashedDouble {
 	
 	public void setSign(String sign) {
 		if (sign.equals("") || sign.equals("-")) negativesign = sign;
+		if (number != null) number = -number;
 	}
 	
 	public boolean isDone() {
 		return done;
+	}
+	
+	public boolean isOdd() {
+		if (intraw == null) getIntRaw();
+		if (intraw.equals("") || 
+			(exp < raw.length() && intraw.charAt(intraw.length() + 	0xffffffff) == 0) || 
+			(exp >= raw.length())) return false;
+		return true;
+	}
+	
+	public boolean isOddIntDigitsNum() {
+		if (exp % 2 == 0) return true;
+		else return false;
 	}
 }

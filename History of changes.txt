@@ -1,5 +1,18 @@
 Hisory of changes
 
+19.03.2020
+1. Fixed processing of some extra large numbers.
+2. Added isOdd() method to SlashedDouble class and now pow() works more correctly with negative numbers by more precisely getting sign of result.
+3. Added isOddDigitsNum() method to resolve issue with taking some roots.
+4. Fixed unit rounding in innerMult().
+5. Fixed issue of processing degree of denormal numbers in SlashedDouble getDoubleRaw() method.
+6. Deleted one unused constructor from SlashedDouble class.
+7. Upgraded two constructors with cutFractTail() method which work not so correctly in them before, but now it work as it should and total speed for almost all pow() operations highly increased.
+8. Fixed issue that was lead to error in resulting sign conclusion in setSign() method. 
+9. After all upgrades total accuracy raised up to 99.9999% for first 12 digits after decimal point in decimal notation, and to 99.995% for first 13 digits and more of it: in up to 16 digits after decimal point almost all numbers are correct. All accuracy miss accounts in some very specific extra small and extra large  powers. I suppose it happens because of surrogate long variable overflow and processing this overflow. However this processing seems to be the best way for it. The only way, it sees from this point, to improve accuracy to 100% is to attach additional surrogate raw that will be handling all overflowing digits. But for now, implying such thing is not the primary objective. And I don't know will I imply it at all, because 100% accuracy aginst hardware floating point calculation is not the main purpose of the current project.
+10. Some variables naming revision accomplished.
+11. TODO: divider.
+
 18.03.2020
 1. Finded issue in taking root processing. Succefully resolved.
 2. Testing method changed. Now it more accurate.
@@ -7,4 +20,4 @@ Hisory of changes
 4. Fixed issue in calculating negative root exponent.
 5. Fixed issue of rounding numbers around 1.0 (there was an overflow in MiniMath.innerMult() when number was almost full of 'ones').
 6. Fixed several other issues with holding extra small and extra large numbers.
-7. TODO fix processing of some extra large numbers.
+7. TODO: fix processing of some extra large numbers.
