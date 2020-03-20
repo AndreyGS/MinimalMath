@@ -3,6 +3,8 @@ Hisory of changes
 20.03.2020
 1. Fixed bug in integer and fraction parts of number calculating in getIntRaw() and getFractRaw() methods, by replacing a few instructions in three SlashedDouble constructors.
 2. Added roundResult() method to MiniMath class. It implements scaled rounding that applicates in double-precision rounding. It works correctly, but because of lack of availible digits at some stage it cannot calculate correctly needed number. What is more intresting is that getRoundedRaw() method in the SlashedDouble class, which produce a pretty simple rounding based on the value of the first cutting character, is much accurate and gives up to 1.5-2 times less missed values in the case of 14 digits after decimal point. I will keep this (roundResult()) method, but will not be use it for now.
+3. Fixed bug with integer part - to resolve it, I had to refused from integer type for integral degrees in favor of long type.
+4. Fixed bug with extra big powers handling.
 
 19.03.2020
 1. Fixed processing of some extra large numbers.

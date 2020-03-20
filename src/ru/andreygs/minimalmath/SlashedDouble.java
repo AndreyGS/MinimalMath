@@ -59,6 +59,7 @@ public class SlashedDouble {
 		
 		this.raw = cutFractTail(this.raw);
 		this.longraw = Long.parseUnsignedLong(this.raw, 2);
+		
 		getFractRaw();
 	}
 	
@@ -224,7 +225,6 @@ public class SlashedDouble {
 			// total amount of missed values with accuracy of 13-14 digits after decimal point 
 			// reach up to 10-20 times less, relatively of when these instructions are off
 			if (raw.length() > 53 && raw.charAt(53) == '1') {
-				//System.out.println(raw.length());
 				if (raw.indexOf('0') > 53 || raw.indexOf('0') == 0xffffffff) {
 					exp++;
 					roundedbin = "0000000000000000000000000000000000000000000000000000";
@@ -337,12 +337,16 @@ public class SlashedDouble {
 	
 	public Long getLongIntRaw() {
 		if (longintraw == null) {
-			longintraw = Long.valueOf(intraw, 2);
+			String tempraw = intraw.substring(0);
+			
+			for (int i = tempraw.length(); i < 64 && i <= exp; i++) tempraw += '0';
+			longintraw = Long.parseUnsignedLong(tempraw, 2);
 		}
-		
+
 		return longintraw;
 	}
 	
+	/*
 	public Integer getIntegerIntRaw() {
 		if (integerintraw == null) {
 			if (intraw.length() > 32) {
@@ -355,7 +359,7 @@ public class SlashedDouble {
 		}
 		
 		return integerintraw;
-	}
+	}*/
 	
 	public Long getLongFractRaw() {
 		if (longfractraw == null) {
