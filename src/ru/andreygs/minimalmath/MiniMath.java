@@ -70,14 +70,14 @@ public class MiniMath {
 		} else if (fpwr.getIEEE754() == 1.0) {
 			return ipwr.getIEEE754();
 		}
-			
+		
 		return innerMult(ipwr, fpwr, ipwr.getNegativeSign()).getIEEE754();
 	}
 	
 	private static SlashedDouble intPower(SlashedDouble number, SlashedDouble power) {
 		int ipwr = (int) power.getIntegerIntRaw();
 		SlashedDouble result = new SlashedDouble(1.0);
-		
+		//out.println(ipwr + "*");
 		if (number.getIEEE754() == -1) {
 			if (ipwr % 2 == 0) return result;
 			else return new SlashedDouble(-1.0);
@@ -88,7 +88,6 @@ public class MiniMath {
 				result = innerMult(number, result, "");
 				if (result.isDone()) {
 					if (isNegative(number, power)) return new SlashedDouble(-result.getIEEE754(), 1);
-					;
 					return result;
 				}
 			}
@@ -159,7 +158,7 @@ public class MiniMath {
 	private static SlashedDouble innerMult(SlashedDouble number1, SlashedDouble number2, String negativesign) {
 		long result = 0l, unit;
 		String num2raw;
-
+		
 		if (number1.onesEnum() < number2.onesEnum()) {
 			unit = number2.getLongRaw();
 			num2raw = number1.getBinaryRaw();
@@ -207,6 +206,7 @@ public class MiniMath {
 			}
 		}
 		String raw = Long.toBinaryString(result);
+		
 		int resultexp = getMultExponent(raw, number1.getExp(), number2.getExp(), number1.getBinaryRaw(), number2.getBinaryRaw(), biasresult);
 
 		if (resultexp == 0 && 
@@ -243,6 +243,7 @@ public class MiniMath {
 		String degreeraw = degree.getFractRaw();
 		int degreeexp = degree.getExp();
 		SlashedDouble result = new SlashedDouble(1.0);
+
 		for (int i = 0xffffffff; i > degreeexp; i--) {
 			number = innerRoot(number);
 		} 
@@ -252,6 +253,7 @@ public class MiniMath {
 				result = innerMult(number, result, "");
 			}
 		}
+		
 		return result;
 	}
 	
@@ -377,35 +379,104 @@ public class MiniMath {
 				result++;
 			}
 		}
+
 		int resultexp = getRootExponent(number.getExp());
+		
 		return new SlashedDouble(result, resultexp, "", true);
 	}
 	
+	/*
+	private static double roundResult(SlashedDouble number) {
+		String raw = number.getBinaryRaw();
+		if (raw == null || raw.length() < 54) return number.getIEEE754();
+		//System.out.println("$$$");
+		SlashedDouble a = new SlashedDouble(raw.substring(0, 53), number.getExp(), "");
+		long longraw = Long.parseUnsignedLong(raw.substring(0, 53), 2);
+		longraw++;
+		SlashedDouble b = new SlashedDouble(Long.toBinaryString(longraw), number.getExp(), "");
+		
+		SlashedDouble square = innerMult(number, number, "");
+		SlashedDouble product = innerMult(a, b, "");
+		
+		if (square.getIEEE754() == Double.POSITIVE_INFINITY &&  b.getIEEE754() != Double.POSITIVE_INFINITY) {
+			b.setSign(number.getNegativeSign());
+			return b.getIEEE754();
+		} else if (b.getIEEE754() == Double.POSITIVE_INFINITY) {
+			a.setSign(number.getNegativeSign());
+			return a.getIEEE754();
+		}
+		
+		String rawsquare = square.getBinaryRaw();
+		for (int i = rawsquare.length(); i < 64; i++) rawsquare += '0';
+		String rawproduct = product.getBinaryRaw();
+		for (int i = rawproduct.length(); i < 64; i++) rawproduct += '0';
+		long longrawsquare = Long.parseUnsignedLong(rawsquare, 2);
+		long longrawproduct = Long.parseUnsignedLong(rawproduct, 2);
+		
+		if (longrawsquare > longrawproduct || square.getExp() > product.getExp()) {
+			b.setSign(number.getNegativeSign());
+			return b.getIEEE754();
+		} else {
+			a.setSign(number.getNegativeSign());
+			return a.getIEEE754();
+		}
+	}*/
+	
 	public static void main(String[] args) {
-		//double result1 = pow(7.667063751883245E30, 0.9989203174209581), result2 = Math.pow(7.667063751883245E30, 0.9989203174209581);
+		//double result1 = pow(5.604134961757229E31, 7.760977045847191E-16), result2 = Math.pow(5.604134961757229E31, 7.760977045847191E-16);
 		//double result1 = pow(7.667063751883245E30, 0.9989203174209581), result2 = Math.pow(7.667063751883245E30, 0.9989203174209581);
 
 		//out.println(result1);
 		//out.println(result2);
-		
-		
+		//out.println(Long.toBinaryString(Double.doubleToLongBits(-8.26433735220462E35)) + "$$$");
+		//out.println(Long.toBinaryString(Double.doubleToLongBits(result1)));
+		//out.println(Long.toBinaryString(Double.doubleToLongBits(result2)));
 		//out.println(Math.pow(7.667063751883245E30, 0.25));
 		//out.println(Math.pow(7.667063751883245E30, 0.125));
 		//out.println(Math.pow(7.667063751883245E30, 0.0625));
+		//out.println(Math.round)
 		/*
-		2.7689463252080645E15
-5.2620778454979785E7
-7254.018090339987
-85.17052360024556
+5.604134961757229E31!
+7.760977045847191E-16
+1.0000000000000284
+1.0000000000000568
+
 */		//out.println(Long.toBinaryString(Double.doubleToLongBits(result1)));
 		//out.println(Long.toBinaryString(Double.doubleToLongBits(result2)) + "!!!!");
 		
-
-		
 		double factor1 = 1000000000000000000000000000000000000000.0, factor2 = 1000000000000000000000000000000000000000.0;
-		
+		int counter = 0;
 		for (int i = 0; i < 80; i++) {
-			factor1 = factor1 / 10; out.println(factor1 + "!");
+			factor1 = factor1 / 10; out.println(factor1 + " power random factor");
+			out.println("");
+			factor2 = 1000000000000000000000000000000000000000.0;
+			for (int j = 0; j < 800; j++) {
+				if (j % 100 == 0) factor2 = factor2 / 10;
+				double num = Math.random()*factor2, power = Math.floor(Math.random()*factor1);
+				if (j % 2 == 0) num = -num;
+				double result1 = pow(num, power), result2 = Math.pow(num, power);
+				if (result1 != result2 && (!Double.isNaN(result1) && !Double.isNaN(result1))) {
+					if ((Double.toString(result1).length() < 16 || Double.toString(result2).length() < 16 || !Double.toString(result1).substring(0, 16).equals(Double.toString(result2).substring(0, 16))) && !(result1 == 1.0 && result2 == 1.0000000000000002)) {
+					out.println(num + "!");
+					out.println(power);
+					out.println(result1);
+					out.println(result2);
+					out.println(Long.toBinaryString(Double.doubleToLongBits(power)));
+					out.println(Double.toHexString(power));
+					counter++;
+					}
+				}
+			}
+		}
+		
+		out.println(counter + " results of integer number powers that have missed accuracy");
+		
+		factor1 = 1000000000000000000000000000000000000000.0;
+		factor2 = 1000000000000000000000000000000000000000.0;
+		counter = 0;
+		for (int i = 0; i < 80; i++) {
+			factor1 = factor1 / 10; out.println(factor1 + " power random factor");
+			out.println("");
 			factor2 = 1000000000000000000000000000000000000000.0;
 			for (int j = 0; j < 800; j++) {
 				if (j % 100 == 0) factor2 = factor2 / 10;
@@ -420,9 +491,14 @@ public class MiniMath {
 					out.println(result2);
 					out.println(Long.toBinaryString(Double.doubleToLongBits(power)));
 					out.println(Double.toHexString(power));
+					counter++;
 					}
 				}
 			}
 		}
+		
+		out.println(counter + " results of real number powers that have missed accuracy");
+		
+		
 	}
 }

@@ -33,13 +33,15 @@ public class SlashedDouble {
 	public SlashedDouble(double number) {
 		this.number = number;
 		slashIt();
-
+		raw = cutFractTail(raw);
 	}
 	
 	public SlashedDouble(double number, boolean additionalslicing) {
-		this(number);
-		
+		this.number = number;
+		slashIt();		
 		getIntRaw();
+
+		raw = cutFractTail(raw);
 		getFractRaw();
 	}
 	
@@ -47,15 +49,16 @@ public class SlashedDouble {
 		this.number = number;
 		this.done = true;
 	}
-
+	
 	public SlashedDouble(Long longraw, Integer exp, String negativesign, boolean additionalslicing) {
-		this.raw = cutFractTail(Long.toBinaryString(longraw));
-		this.longraw = Long.parseUnsignedLong(this.raw, 2);
+		this.raw = Long.toBinaryString(longraw);
 		this.exp = exp;
 		this.negativesign = negativesign;
-		
 		checkRaw();
 		getIntRaw();
+		
+		this.raw = cutFractTail(this.raw);
+		this.longraw = Long.parseUnsignedLong(this.raw, 2);
 		getFractRaw();
 	}
 	
@@ -95,7 +98,7 @@ public class SlashedDouble {
 		else negativesign = "";
 		
 		roundedhex = stripes[1];
-		raw = cutFractTail(fromHexToBinary(roundedhex));
+		raw = fromHexToBinary(roundedhex);
 
 		if (stripes[0].charAt(stripes[0].length() + 0xffffffff) == '0') {
 			for (int i = 0; i < raw.length(); i++) {
@@ -211,23 +214,27 @@ public class SlashedDouble {
 		return roundedhex;
 	}
 	
-	private String roundingToDoubleRaw() {
+	
+	private String getRoundedRaw() {
 		if (roundedbin == null) {
-			if (raw.length() > 53) {
-				if (raw.charAt(53) == '1') {
-					if (raw.indexOf('0') > 52 || raw.indexOf('0') == 0xffffffff) {
-						exp++;
-						roundedbin = "0000000000000000000000000000000000000000000000000000";
-						raw = "";
-					} else {
-						long chunk = Long.valueOf(raw.substring(1,53), 2);
-						chunk++;
-						roundedbin = "";
-						for (int i = 1; raw.charAt(i) == '0'; i++) roundedbin += "0";
-						roundedbin += Long.toBinaryString(chunk);
-					}
+			
+			// these instructions supply additional accuracy
+			// in spite of that we already have scaled rounding in MiniMath,
+			// current final rounding highly increase precision of result,
+			// total amount of missed values with accuracy of 13-14 digits after decimal point 
+			// reach up to 10-20 times less, relatively of when these instructions are off
+			if (raw.length() > 53 && raw.charAt(53) == '1') {
+				//System.out.println(raw.length());
+				if (raw.indexOf('0') > 53 || raw.indexOf('0') == 0xffffffff) {
+					exp++;
+					roundedbin = "0000000000000000000000000000000000000000000000000000";
+					raw = "";
 				} else {
-					roundedbin = raw.substring(1,53);
+					long chunk = Long.valueOf(raw.substring(1,53), 2);
+					chunk++;
+					roundedbin = "";
+					for (int i = 1; raw.charAt(i) == '0'; i++) roundedbin += "0";
+					roundedbin += Long.toBinaryString(chunk);
 				}
 			} else {
 				roundedbin = raw.substring(1);
@@ -238,7 +245,7 @@ public class SlashedDouble {
 		}
 		
 		return roundedbin;
-	} 
+	}
 	
 	public String getDoubleRaw() {
 		if (ieee754bin == null) {
@@ -246,7 +253,7 @@ public class SlashedDouble {
 			else ieee754bin = "0";
 			
 			int resultexp = exp + 1023;
-			roundingToDoubleRaw();
+			getRoundedRaw();
 			
 			if (resultexp > 2046) {
 				ieee754bin += Integer.toBinaryString(resultexp) + "0000000000000000000000000000000000000000000000000000"; // +-Infinity
@@ -285,7 +292,7 @@ public class SlashedDouble {
 		
 		return number;	
 	}
-	
+
 	public Integer onesEnum() {
 		if (onesnum == null) {
 			int counter = 0;
@@ -339,6 +346,8 @@ public class SlashedDouble {
 	public Integer getIntegerIntRaw() {
 		if (integerintraw == null) {
 			if (intraw.length() > 32) {
+				// this is for overflowing power - it will never get to end,
+				// but, instead we can getting know which result it limits.
 				integerintraw = Integer.parseUnsignedInt(intraw.substring(0, 30), 2);
 			} else {
 				integerintraw = Integer.parseUnsignedInt(intraw, 2);
@@ -366,8 +375,9 @@ public class SlashedDouble {
 	}
 	
 	public void setSign(String sign) {
+		String currentsign = negativesign;
+		if (number != null && currentsign != sign) number = -number;
 		if (sign.equals("") || sign.equals("-")) negativesign = sign;
-		if (number != null) number = -number;
 	}
 	
 	public boolean isDone() {
