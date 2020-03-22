@@ -14,57 +14,54 @@ public class MiniMath {
 		1024l, 512l, 256l, 128l, 64l, 32l, 16l, 8l, 4l, 2l
 	};
 	
-	public static Double plus(String arg1, String arg2) {
-		if (arg1 == null || arg2 == null) return null;
-		
-		double a1, a2;
-		try {
-			a1 = Double.parseDouble(arg1);
-			a2 = Double.parseDouble(arg2);
-			return a1+a2;
-		} catch(NumberFormatException e) {
-			return null;
-		}
-	}
-	
 	public static Double pow(double number, double power) {
-		if (power == Double.NaN || number == Double.NaN) {
-			return Double.NaN;
-		} else if (number == Double.POSITIVE_INFINITY || power == Double.POSITIVE_INFINITY) {
-			return Double.POSITIVE_INFINITY;
-		} else if (number == Double.NEGATIVE_INFINITY) {
-			if ((int) power % 2 == 0) return Double.POSITIVE_INFINITY;
-			else return Double.NEGATIVE_INFINITY;
-		} else if (power == Double.NEGATIVE_INFINITY) {
-			if (number >= 0) return 0.0;
-			else if (number < 0) return -0.0;
-		} else if (number == 1) return number;
-		else if (power == 0) return 1.0;
-		else if (number == 0) return 0.0;
-		
 		SlashedDouble sdnum = new SlashedDouble(number);
 		SlashedDouble sdpow = new SlashedDouble(power, true);
-		if (sdpow.getFractRaw().length() > 0 && number < 0) return Double.NaN;
+		
+		return pow(sdnum, sdpow).getIEEE754();
+	}
+	
+	public static SlashedDouble pow(SlashedDouble sdnum, SlashedDouble sdpow) {
+		double number = sdnum.getDouble(), power = sdpow.getDouble();
+		
+		if (sdpow.getFractRaw().length() > 0 && number < 0) return new SlashedDouble(Double.NaN);
+		
+		if (Double.isNaN(power) || Double.isNaN(number)) {
+			return new SlashedDouble(Double.NaN);
+		} else if (number == Double.POSITIVE_INFINITY || power == Double.POSITIVE_INFINITY) {
+			return new SlashedDouble(Double.POSITIVE_INFINITY);
+		} else if (number == Double.NEGATIVE_INFINITY) {
+			if ((int) power % 2 == 0) return new SlashedDouble(Double.POSITIVE_INFINITY);
+			else return new SlashedDouble(Double.NEGATIVE_INFINITY);
+		} else if (power == Double.NEGATIVE_INFINITY) {
+			if (number >= 0) return new SlashedDouble(0.0);
+			else if (number < 0) return new SlashedDouble(-0.0);
+		} else if (number == 1) return sdnum;
+		else if (power == 0.0) return new SlashedDouble(1.0);
+		else if (power == 1.0) return sdnum;
+		else if (number == 0.0) return new SlashedDouble(0.0);
+		else if (number == -0.0) return new SlashedDouble(-0.0);
 		
 		SlashedDouble ipwr;
 		
-		if (sdpow.getIntRaw().length() > 0) {
-			if (sdpow.getLongIntRaw() < 0 || sdpow.getLongIntRaw() > intPwr[0]) {
+		if (sdpow.getExp() > 0xffffffff) {
+			if (sdpow.getExp() > 30) {
 				if (sdnum.getExp() < 0) {
-					if (number < 0) return -0.0;
-					else return 0.0;
+					if (number < 0) return new SlashedDouble(-0.0);
+					else return new SlashedDouble(0.0);
 				} else {
-					if (number < 0 && sdpow.isOdd()) return Double.NEGATIVE_INFINITY;
-					else return Double.POSITIVE_INFINITY;
+					if (number < 0 && sdpow.isOdd()) return new SlashedDouble(Double.NEGATIVE_INFINITY);
+					else return new SlashedDouble(Double.POSITIVE_INFINITY);
 				}
 			}
 			ipwr = intPower(sdnum, sdpow);
-			if (ipwr.isDone()) return ipwr.getIEEE754();
+			
+			if (ipwr.isDone()) return ipwr;
 		} else {
 			ipwr = new SlashedDouble(1.0);
 		}
 		if (ipwr.getIEEE754() == Double.POSITIVE_INFINITY || ipwr.getIEEE754() == Double.NEGATIVE_INFINITY)
-			return ipwr.getIEEE754();
+			return ipwr;
 			
 		SlashedDouble fpwr;
 		
@@ -74,19 +71,20 @@ public class MiniMath {
 			fpwr = new SlashedDouble(1.0);
 		}
 		
-		if (fpwr.getIEEE754() == Double.POSITIVE_INFINITY || fpwr.getIEEE754() == Double.NEGATIVE_INFINITY || fpwr.getIEEE754() == Double.NaN || ipwr.getIEEE754() == 1.0) {
-			return fpwr.getIEEE754();
+		if (fpwr.getIEEE754() == Double.POSITIVE_INFINITY || fpwr.getIEEE754() == Double.NEGATIVE_INFINITY || fpwr.getIEEE754() == Double.NaN) {
+			return fpwr;
 		} else if (fpwr.getIEEE754() == 1.0) {
-			return ipwr.getIEEE754();
+			return ipwr;
 		} else if (fpwr.getIEEE754() == 0.0) {
-			return 0.0;
+			return new SlashedDouble(0.0);
 		}
 		
-		return innerMult(ipwr, fpwr, ipwr.getNegativeSign()).getIEEE754();
+		return innerMult(ipwr, fpwr, ipwr.getNegativeSign());
 	}
 	
 	private static SlashedDouble intPower(SlashedDouble number, SlashedDouble power) {
-		long ipwr = power.getLongIntRaw();
+		long ipwr = power.getIntSD().getIEEE754().longValue();
+		//out.println(power.getIntSD().getBinaryRaw());
 		SlashedDouble result = new SlashedDouble(1.0);
 
 		if (number.getIEEE754() == -1) {
@@ -125,36 +123,44 @@ public class MiniMath {
 	}
 	
 	public static Double mult(double number1, double number2) {
-		if (number1 == Double.NaN || number2 == Double.NaN) {
-			return Double.NaN;
+		SlashedDouble sdnum1 = new SlashedDouble(number1);
+		SlashedDouble sdnum2 = new SlashedDouble(number2);
+		
+		
+		return mult(sdnum1, sdnum2).getIEEE754();
+	}
+	
+	public static SlashedDouble mult(SlashedDouble sdnum1, SlashedDouble sdnum2) {
+		double number1 = sdnum1.getDouble(), number2 = sdnum2.getDouble();
+		
+		if (Double.isNaN(number1) || Double.isNaN(number2)) {
+			return new SlashedDouble(Double.NaN);
 		} else if (number1 == Double.POSITIVE_INFINITY) {
-			if (number2 == Double.NEGATIVE_INFINITY) return Double.NEGATIVE_INFINITY;
-			else if (number2 == 0.0 || number2 == -0.0) return Double.NaN;
-			else return Double.POSITIVE_INFINITY;
+			if (number2 == Double.NEGATIVE_INFINITY) return new SlashedDouble(Double.NEGATIVE_INFINITY);
+			else if (number2 == 0.0 || number2 == -0.0) return new SlashedDouble(Double.NaN);
+			else return new SlashedDouble(Double.POSITIVE_INFINITY);
 		} else if (number1 == Double.NEGATIVE_INFINITY) {
-			if (number2 == Double.NEGATIVE_INFINITY) return Double.POSITIVE_INFINITY;
-			else if (number2 == 0.0 || number2 == -0.0) return Double.NaN;
-			else return Double.NEGATIVE_INFINITY;
+			if (number2 == Double.NEGATIVE_INFINITY) return new SlashedDouble(Double.POSITIVE_INFINITY);
+			else if (number2 == 0.0 || number2 == -0.0) return new SlashedDouble(Double.NaN);
+			else return new SlashedDouble(Double.NEGATIVE_INFINITY);
 		} else if (number1 == 0.0) {
-			if (number2 == Double.NEGATIVE_INFINITY || number2 == Double.POSITIVE_INFINITY) return Double.NaN;
-			else if (number2 == -0.0) return -0.0;
-			else return 0.0;
+			if (number2 == Double.NEGATIVE_INFINITY || number2 == Double.POSITIVE_INFINITY) return new SlashedDouble(Double.NaN);
+			else if (number2 == -0.0) return new SlashedDouble(-0.0);
+			else return new SlashedDouble(0.0);
 		} else if (number1 == -0.0) {
-			if (number2 == Double.NEGATIVE_INFINITY || number2 == Double.POSITIVE_INFINITY) return Double.NaN;
-			else if (number2 == -0.0) return 0.0;
-			else return -0.0;
+			if (number2 == Double.NEGATIVE_INFINITY || number2 == Double.POSITIVE_INFINITY) return new SlashedDouble(Double.NaN);
+			else if (number2 == -0.0) return new SlashedDouble(0.0);
+			else return new SlashedDouble(-0.0);
 		} else if (number1 == 1) {
-			return number2;
+			return sdnum2;
 		} else if (number2 == 1) {
-			return number1;
+			return sdnum1;
 		} else if (number1 == 0xffffffff) {
-			return -number2;
+			return new SlashedDouble(-number2);
 		} else if (number2 == 0xffffffff) {
-			return -number1;
+			return new SlashedDouble(-number1);
 		}
 		
-		SlashedDouble sd1 = new SlashedDouble(number1);
-		SlashedDouble sd2 = new SlashedDouble(number2);
 		String negativesign;
 		
 		if ((number1 >= 0 && number2 >= 0) || (number1 < 0 && number2 < 0)) {
@@ -163,7 +169,7 @@ public class MiniMath {
 			negativesign = "-";
 		}
 		
-		return innerMult(sd1, sd2, negativesign).getIEEE754();
+		return innerMult(sdnum1, sdnum2, negativesign);
 	}
 	
 	private static SlashedDouble innerMult(SlashedDouble number1, SlashedDouble number2, String negativesign) {
@@ -256,21 +262,30 @@ public class MiniMath {
 		}
 	}
 
-	private static SlashedDouble fractPower(SlashedDouble number, SlashedDouble degree) {
-		String degreeraw = degree.getFractRaw();
-		int degreeexp = degree.getExp();
+	private static SlashedDouble fractPower(SlashedDouble number, SlashedDouble power) {
+		String powerraw = power.getFractRaw();
+		int powerexp = power.getExp();
 		SlashedDouble result = new SlashedDouble(1.0);
-
-		for (int i = 0xffffffff; i > degreeexp; i--) {
+		//double test = 0.015719639933614228;
+		//double tresult = 1.0;
+		
+		for (int i = 0xffffffff; i > powerexp; i--) {
 			number = innerRoot(number);
-			
+			//out.println(number.getIEEE754() + "*");
+			//test = Math.pow(test, 0.5);
+			//out.println(test);
 			if (number.isDone()) return number;
 		} 
-		for (int i = 0, counter = 1; i < degreeraw.length(); i++, counter++) {
+		for (int i = 0; i < powerraw.length(); i++) {
 			number = innerRoot(number);
-			
-			if (degreeraw.charAt(i) == '1') {
+			//out.println(number.getIEEE754() + "*");
+			//test = Math.pow(test, 0.5);
+			//out.println(test);
+			if (powerraw.charAt(i) == '1') {
 				result = innerMult(number, result, "");
+				//out.println(result.getIEEE754() + "&");
+				//tresult = tresult * test;
+				//out.println(tresult);
 				if (number.isDone()) return result;
 			}
 		}
@@ -281,8 +296,7 @@ public class MiniMath {
 	private static SlashedDouble innerRoot(SlashedDouble number) {
 		String numraw = number.getBinaryRaw(), residualstr;
 		long minuend = 0l, subtrahend, residual;
-		if ((number.getIntRaw().length() > 0 && !number.isOddIntDigitsNum()) ||
-			(number.getIntRaw().length() == 0 && ((~number.getExp() + 1) % 2 == 1))) {
+		if (!number.isOddIntDigitsNum()) {
 			if (numraw.substring(0, 2).equals("10")) {
 				numraw = "01" + numraw.substring(2);
 			} else {
@@ -414,56 +428,83 @@ public class MiniMath {
 		//}
 	}
 	
-	/*
-	private static double roundResult(SlashedDouble number) {
-		String raw = number.getBinaryRaw();
-		if (raw == null || raw.length() < 54) return number.getIEEE754();
-		//System.out.println("$$$");
-		SlashedDouble a = new SlashedDouble(raw.substring(0, 53), number.getExp(), "");
-		long longraw = Long.parseUnsignedLong(raw.substring(0, 53), 2);
-		longraw++;
-		SlashedDouble b = new SlashedDouble(Long.toBinaryString(longraw), number.getExp(), "");
+	public static Double floor(double number) {
+		SlashedDouble sdnum = new SlashedDouble(number);
 		
-		SlashedDouble square = innerMult(number, number, "");
-		SlashedDouble product = innerMult(a, b, "");
-		
-		if (square.getIEEE754() == Double.POSITIVE_INFINITY &&  b.getIEEE754() != Double.POSITIVE_INFINITY) {
-			b.setSign(number.getNegativeSign());
-			return b.getIEEE754();
-		} else if (b.getIEEE754() == Double.POSITIVE_INFINITY) {
-			a.setSign(number.getNegativeSign());
-			return a.getIEEE754();
+		return floor(sdnum).getIEEE754(); 
+	}
+	
+	public static SlashedDouble floor(SlashedDouble sdnum) {
+		double number = sdnum.getIntSD().getIEEE754();
+		//out.println(number + "!");
+		if (Double.isNaN(number) || number == Double.POSITIVE_INFINITY || 
+			number == Double.NEGATIVE_INFINITY || sdnum.getNegativeSign().isEmpty())
+			return sdnum.getIntSD();
+		else {
+			//out.println(number + "!");
+			if (sdnum.getFractRaw().length() > 0) return new SlashedDouble(number + 0xffffffff);
+			else return sdnum.getIntSD();
 		}
+		/*
+		if (Double.isNaN(number) || number == Double.POSITIVE_INFINITY || 
+			number == Double.NEGATIVE_INFINITY )
+			return sdnum;
 		
-		String rawsquare = square.getBinaryRaw();
-		for (int i = rawsquare.length(); i < 64; i++) rawsquare += '0';
-		String rawproduct = product.getBinaryRaw();
-		for (int i = rawproduct.length(); i < 64; i++) rawproduct += '0';
-		long longrawsquare = Long.parseUnsignedLong(rawsquare, 2);
-		long longrawproduct = Long.parseUnsignedLong(rawproduct, 2);
+		String negativesign = sdnum.getNegativeSign();
+		String raw = sdnum.getBinaryRaw();
 		
-		if (longrawsquare > longrawproduct || square.getExp() > product.getExp()) {
-			b.setSign(number.getNegativeSign());
-			return b.getIEEE754();
+		if (sdnum.getExp() < 0) {
+			if (negativesign.equals("")) return new SlashedDouble(0.0);
+			else return new SlashedDouble(-1.0);
+		} else if (sdnum.getExp() >= (raw.length() + 0xffffffff)) {
+			return sdnum;
 		} else {
-			a.setSign(number.getNegativeSign());
-			return a.getIEEE754();
-		}
-	}*/
+			if (negativesign.equals("")) 
+				return new SlashedDouble(raw.substring(0, sdnum.getExp()+1), sdnum.getExp(), "");
+			else {
+				long longraw = Long.parseLong(raw.substring(0, sdnum.getExp()+1), 2);
+				longraw++;
+				return new SlashedDouble(Long.toBinaryString(longraw), sdnum.getExp(), "");
+			}	
+		}*/
+	}
+	
+	// this method returns value of fractional part that is closest to zero
+	public static Double fraction(double number) {
+		SlashedDouble sdnum = new SlashedDouble(number);
+		
+		return fraction(sdnum).getIEEE754(); 
+	}
+	
+	public static SlashedDouble fraction(SlashedDouble sdnum) {
+
+		return sdnum.getFractSD();
+		/*
+		if (Double.isNaN(number) || sdnum.getExp() < 0)
+			return sdnum;
+		else if (number == Double.POSITIVE_INFINITY || number == Double.NEGATIVE_INFINITY || 
+			number == 0.0 || number == -0.0 || sdnum.getExp() >= (sdnum.getBinaryRaw().length() + 0xffffffff))
+			return new SlashedDouble(0.0);
+		else {
+			return new SlashedDouble(sdnum.getBinaryRaw().substring(sdnum.getExp()+1), 0, "");
+		}*/
+	}
 	
 	public static void main(String[] args) {
 		
-				
-		//double result1 = pow(9.280918462696236E-22, 7.985759688413425E26), result2 = Math.pow(9.280918462696236E-22, 7.985759688413425E26);
+		//double result1 = pow(2.416702254629639E-36, 6.726006230511679E-25), result2 = Math.pow(2.416702254629639E-36, 6.726006230511679E-25);
 		//double result1 = pow(7.667063751883245E30, 0.9989203174209581), result2 = Math.pow(7.667063751883245E30, 0.9989203174209581);
 
 		//out.println(result1);
 		//out.println(result2);
-	//	9.280918462696236E-22!
-//7.985759688413425E26
-//1.0
+		//0.12537798823403662
+
+//2.416702254629639E-36!
+//6.726006230511679E-25
 //0.0
-//5.9311198572135665E-148
+//1.0
+
+
 
 		//out.println(Math.pow(1.723877541351934E-8, 2));
 		//out.println(pow(1.723877541351934E-8, 2));
@@ -474,10 +515,9 @@ public class MiniMath {
 		//out.println(Math.pow(7.667063751883245E30, 0.125));
 		//out.println(Math.pow(7.667063751883245E30, 0.0625));
 		//out.println(Math.round)
-		/*
-
-
-*/		//out.println(Long.toBinaryString(Double.doubleToLongBits(result1)));
+		
+		
+		//out.println(Long.toBinaryString(Double.doubleToLongBits(result1)));
 		//out.println(Long.toBinaryString(Double.doubleToLongBits(result2)) + "!!!!");
 		
 		double factor1 = 1000000000000000000000000000000000000000.0, factor2 = 1000000000000000000000000000000000000000.0;
@@ -538,5 +578,89 @@ public class MiniMath {
 		out.println(counter + " results of real number powers that have missed accuracy");
 		
 		
+		
+		/*
+		out.println(Double.toHexString(Double.MIN_NORMAL - Double.MIN_VALUE));
+		double rnd = Math.random() * 6565.0;
+		double rnd2 = Math.random() * 12412.0;
+		SlashedDouble sd1 = new SlashedDouble(rnd);
+		SlashedDouble sd2 = new SlashedDouble(rnd2);
+		out.println(mult(rnd1, rnd2));
+		out.println(rnd * rnd2);
+		
+		out.println(floor(0.0));
+		out.println(Math.floor(0.0));
+		out.println(floor(-0.0));
+		out.println(Math.floor(-0.0));
+		out.println(floor(Double.POSITIVE_INFINITY));
+		out.println(Math.floor(Double.POSITIVE_INFINITY));
+		out.println(floor(Double.NEGATIVE_INFINITY));
+		out.println(Math.floor(Double.NEGATIVE_INFINITY));
+		out.println(floor(Double.NaN));
+		out.println(Math.floor(Double.NaN));
+		out.println(floor(234234787897892.57897889890));
+		out.println(Math.floor(234234787897892.57897889890));
+		out.println(floor(-0.2));
+		out.println(Math.floor(-0.2));
+		
+		
+		
+		out.println(fraction(0.0));
+		out.println(fraction(-0.0));
+		out.println(fraction(Double.POSITIVE_INFINITY));
+		out.println(fraction(Double.NEGATIVE_INFINITY));
+		out.println(fraction(Double.NaN));
+		out.println(fraction(43534.534580));
+		//out.println(Double.toHexString(234234.578));
+		out.println(fraction(-0.2));
+		out.println(fraction(1.0));
+		out.println(fraction(-1.0));
+		*/
 	}
+	
+	/*
+	private static double roundResult(SlashedDouble number) throws NullPointerException {
+		String raw = number.getBinaryRaw();
+		if (raw == null || raw.length() < 54) return number.getIEEE754();
+		
+		SlashedDouble a = new SlashedDouble(raw.substring(0, 53), number.getExp(), "");
+		long longraw = Long.parseUnsignedLong(raw.substring(0, 53), 2);
+		longraw++;
+		String longb = Long.toBinaryString(longraw);
+		int expb = number.getExp();
+		if (longb.length() == 54) {
+			longb = "1";
+			expb++;
+		}
+		
+		SlashedDouble b = new SlashedDouble(longb, expb, "");
+		SlashedDouble square = innerMult(number, number, "");
+		SlashedDouble product = innerMult(a, b, "");
+		String rawsquare = square.getBinaryRaw();
+		String rawproduct = product.getBinaryRaw();
+		
+		if (square.isDone()) {
+			if ((square.getIEEE754() == Double.POSITIVE_INFINITY &&  b.getIEEE754() != Double.POSITIVE_INFINITY) || square.getIEEE754() == 0.0 || square.getIEEE754() == -0.0) {
+				b.setSign(number.getNegativeSign());
+				return b.getIEEE754();
+			} else if (b.getIEEE754() == Double.POSITIVE_INFINITY) {
+				a.setSign(number.getNegativeSign());
+				return a.getIEEE754();
+			}
+		}
+		
+		
+		for (int i = rawsquare.length(); i < 64; i++) rawsquare += '0';
+		for (int i = rawproduct.length(); i < 64; i++) rawproduct += '0';
+		long longrawsquare = Long.parseUnsignedLong(rawsquare, 2);
+		long longrawproduct = Long.parseUnsignedLong(rawproduct, 2);
+		
+		if (longrawsquare > longrawproduct || square.getExp() > product.getExp()) {
+			b.setSign(number.getNegativeSign());
+			return b.getIEEE754();
+		} else {
+			a.setSign(number.getNegativeSign());
+			return a.getIEEE754();
+		}
+	}*/
 }
