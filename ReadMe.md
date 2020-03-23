@@ -1,6 +1,6 @@
 # MinimalMath
 
-The main goal of this project - to achive functionality likiwise of some functions of *java.lang.Math* class, but with unusual condition - software calculating without using most of basic operators. Instead we try to accomplish that without of using *substract*, *multiplying*, *division* and *remainder* operators. That's it - the only operator that we can use (from main mathematics operations from the box) is *summing*. To be more specific: *summing, bitwise and bit shift operators and condition operators*. More of it, we are using only standart built-in classes and types. Most calculations are made with conjuction of *Long* and *String* classes in desire to get surrogate *double (IEEE754)* type.
+The main goal of this project - to achive functionality likiwise of some functions of *java.lang.Math* class, but with unusual condition - software calculating with using only some of the basic operators. Instead, we try to accomplish that without of using *substract*, *multiplying*, *division* and *remainder* operators. That's it - the only operator that we can use (from main mathematics operations from the box) is *summing*. To be more specific: *summing, bitwise with bit shifting operators, condition operators and unary minus (last one only in cases where no calculations are actually needed - when it is not the case, and some kind of substraction is necessary, there uses a summing with complement)*. More of it, we are using only standart built-in classes and types. Most calculations are made with conjuction of *Long* and *String* classes that are the parts of single *double (IEEE754)* in respective surrogate type.
 
 ## Classes
 
@@ -8,7 +8,7 @@ For now we have 2 classes, one is *ru.andreygs.minimalmath.MiniMath* - this is t
 
 ## Current stage
 
-As project is started not so along ago (at least it's true for time when I writing these lines ^)), not very much is made. But, there is a working MiniMath.pow() method, which can handle for now all most all numbers and positive degrees to produce fully-correct result according to IEEE754 standart (test will give more than 99.9999% among all incoming *double* values are strictly equal to those that are receiving from *java.lang.Math.pow()* (for 12 decimal digits after decimal point and about 99.995% for 13 digits)). Negative powers are not the case for now, because there is no *dividing* method released in. But it's a question of a couple of days (if I keep some gap, otherwise it will be done tomorrow, and no one actually read this lines). For this reason (missing *dividing*), in a couple of secondary, accessory kind, operations there is a *remainder* and *divide* operators exists yet. 
+As project is started not so along ago (at least it's true for time when I writing these lines ^)), not very much is made. But, there is a working MiniMath.pow() method, which can handle for now almost all numbers and positive degrees to produce fully-correct result according to IEEE754 standart (test will give more than 99.9999% among all incoming *double* values are strictly equal to those that are receiving from *java.lang.Math.pow()* (for 12 decimal digits after decimal point and about 99.995% for 13 digits)). Negative powers are not the case for now, because there is no *dividing* method released in. But it's a question of a couple of days (if I keep some gap, otherwise it will be done tomorrow, and no one actually read this lines). For this reason (missing *dividing*), in a couple of secondary, accessory kind, operations there is a *remainder* and *divide* operators exists yet. 
 
 ## So, for what?
 
@@ -16,7 +16,7 @@ I can't really answer this question precisely. For self-education and in the mat
 
 ## How to use
 
-There is a two working methods that may get an interest of some kind - *MiniMath.mult()*, and *MiniMath.pow()*. In the *main()* method of *MiniMath* class you can find two level test cycle of *MiniMath.pow()* function according to *java.lang.Math.pow()*, where random numbers and powers in staged manner applying to both of them and if result is not the same prints it out to the screen.
+There is a two working methods that may get an interest of some kind - *MiniMath.mult()*, and *MiniMath.pow()*. In the *main()* method of *MiniMath* class you can find 2 two level test cycles of *MiniMath.pow()* function according to *java.lang.Math.pow()*, where random numbers and powers in staged manner applying to both of them (amplitudes of numbers and according powers are from 10^39 till 10^-40) and if result is not the same prints it out to the screen.
 
 
 ## License

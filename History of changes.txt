@@ -4,10 +4,12 @@ Hisory of changes
 1. Updated method fetchRaw() to handle empty input.
 2. getIntRaw(), getFractRaw(), getFractRaw(), getFractSD() were reassembled.
 3. getLongIntRaw(), getIntegerIntRaw(), getLongFractRaw(), isDone() were removed.
-4. Finded and corrected little misprint in innerMult().
-5. getDoubleRaw() method was reassembled and renamed to getIEEE754Bin().
-6. ceil() method was added to MiniMath class.
-7. innerDiv() method building in progress.
+4. Removed two constructors from SlashedDouble class as they don't need any more.
+5. There is minor edits in rest constructors logic and related methods slshIt() and fetchRaw().
+6. Finded and corrected little misprint in innerMult().
+7. getDoubleRaw() method was reassembled and renamed to getIEEE754Bin().
+8. ceil() method was added to MiniMath class.
+9. Private innerDiv() method and respective public interfaces building in progress.
 
 22.03.2020
 1. Method roundResult() in MiniMath class was upgraded to holding some unusual vaules, but it's still have worse accuracy against simplified rounding version in getRoundedRaw() method of SlashedDouble.
