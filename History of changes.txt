@@ -1,12 +1,21 @@
 Hisory of changes
 
+23.04.2020
+1. Updated method fetchRaw() to handle empty input.
+2. getIntRaw(), getFractRaw(), getFractRaw(), getFractSD() were reassembled.
+3. getLongIntRaw(), getIntegerIntRaw(), getLongFractRaw(), isDone() were removed.
+4. Finded and corrected little misprint in innerMult().
+5. getDoubleRaw() method was reassembled and renamed to getIEEE754Bin().
+6. ceil() method was added to MiniMath class.
+7. innerDiv() method building in progress.
+
 22.03.2020
 1. Method roundResult() in MiniMath class was upgraded to holding some unusual vaules, but it's still have worse accuracy against simplified rounding version in getRoundedRaw() method of SlashedDouble.
 2. Method isOddIntDigitsNum() and this is simplified respective condition instruction in innerRoot() method.
 3. isOdd() method was changed in sense of to cutoff intraw variable reminding.
 4. mult() and pow() methods received overloading methods with SlashedDouble incoming.
 5. getIntegerIntRaw(), getLongIntRaw were turned off for the reason of implementing new logic in both availible classes.
-6. Added getIntSD() and getIntFractSD() methods to SlashedDouble.
+6. Added getIntSD() and getFractSD() methods to SlashedDouble.
 7. floor() and fraction() methods added to MiniMath.
 
 
