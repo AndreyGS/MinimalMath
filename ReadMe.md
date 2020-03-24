@@ -1,6 +1,6 @@
 # MinimalMath
 
-The main goal of this project - to achive functionality likiwise of some functions of *java.lang.Math* class, but with unusual condition - software calculating with using only some of the basic operators. Instead, we try to accomplish that without of using *substract*, *multiplying*, *division* and *remainder* operators. That's it - the only operator that we can use (from main mathematics operations from the box) is *summing*. To be more specific: *summing, bitwise with bit shifting operators, condition operators and unary minus (last one only in cases where no calculations are actually needed - when it is not the case, and some kind of substraction is necessary, there uses a summing with complement)*. More of it, we are using only standart built-in classes and types. Most calculations are made with conjuction of *Long* and *String* classes that are the parts of single *double (IEEE754)* in respective surrogate type.
+The main goal of this project - to achive functionality likiwise of some functions of *java.lang.Math* class, but with unusual condition - software calculating with using only some of the basic operators. Instead, we try to accomplish that without of using *substract*, *multiplying*, *division* and *remainder* operators. That's it - the only operator that we can use (from main mathematics operations from the box) is *summing*. To be more specific: *summing, bitwise with bit shifting operators, condition operators and unary minus (last one only in case where no calculations are actually needed - when it is not, and some kind of substraction is necessary, there uses a summing with complement)*. More of it, we are using only standart built-in classes and types. Most calculations are made with conjuction of *Long* and *String* classes that are the sliced parts of full *double (IEEE754)* in respective surrogate type.
 
 ## Classes
 
@@ -8,7 +8,7 @@ For now we have 2 classes, one is *ru.andreygs.minimalmath.MiniMath* - this is t
 
 ## Current stage
 
-As project is started not so along ago (at least it's true for time when I writing these lines ^)), not very much is made. But, there is a working MiniMath.pow() method, which can handle for now almost all numbers and positive degrees to produce fully-correct result according to IEEE754 standart (test will give more than 99.9999% among all incoming *double* values are strictly equal to those that are receiving from *java.lang.Math.pow()* (for 12 decimal digits after decimal point and about 99.995% for 13 digits)). Negative powers are not the case for now, because there is no *dividing* method released in. But it's a question of a couple of days (if I keep some gap, otherwise it will be done tomorrow, and no one actually read this lines). For this reason (missing *dividing*), in a couple of secondary, accessory kind, operations there is a *remainder* and *divide* operators exists yet. 
+As project is started not so along ago (at least it's true for time when I writing these lines ^)), not very much is made. But, there is a working MiniMath.pow() method, which can handle for now almost all numbers and positive degrees to produce fully-correct result according to IEEE754 standart (test will give more than 99.9999% among all incoming *double* values are strictly equal to those that are receiving from *java.lang.Math.pow()* (for 12 decimal digits after decimal point and about 99.995% for 13 digits)).
 
 ## So, for what?
 
@@ -16,7 +16,26 @@ I can't really answer this question precisely. For self-education and in the mat
 
 ## How to use
 
-There is a two working methods that may get an interest of some kind - *MiniMath.mult()*, and *MiniMath.pow()*. In the *main()* method of *MiniMath* class you can find 2 two level test cycles of *MiniMath.pow()* function according to *java.lang.Math.pow()*, where random numbers and powers in staged manner applying to both of them (amplitudes of numbers and according powers are from 10^39 till 10^-40) and if result is not the same prints it out to the screen.
+There is a several working methods that may get an interest of some kind in MiniMath class:
+
+- *static Double abs(double number)* - returns absolute value of a giving double number;
+- *static SlashedDouble abs(SlashedDouble number)* - returns SlashedDouble that holds absolute value of number that argument holds;
+- *static Double floor(double number)* - returns the largest (closest to positive infinity) double value that is less than or equal to the argument and is equal to a mathematical integer.
+- *static SlashedDouble floor(SlashedDouble sdnum)* - returns the SlashedDouble that hold largest (closest to positive infinity) double value that is less than or equal to the number that argument holds, and is equal to a mathematical integer;
+- *static Double ceil(double number)* - returns the smallest (closest to negative infinity) double value that is greater than or equal to the argument and is equal to a mathematical integer;
+- *static SlashedDouble ceil(SlashedDouble sdnum)* - returns the SlashedDouble that holds the smallest (closest to negative infinity) double value that is greater than or equal to the number that argument holds, and is equal to a mathematical integer;
+- *static Double fraction(double number)* - returns fractional part of double number that is closest to zero;
+- *static SlashedDouble fraction(SlashedDouble sdnum)* - returns SlashedDouble that holds fractional part of number that argument holds, that is closest to zero;
+- *static Double mult(double number1, double number2)* - makes a multiplication;
+- *static SlashedDouble mult(SlashedDouble number1, SlashedDouble number2)* - makes a multiplication;
+- *static Double div(double dividend, double divisor)* - makes a division;
+- *static SlashedDouble div(SlashedDouble dividend, SlashedDouble divisor)* - makes a division;
+- *static Double pow(double number, double power)* - returns the value of the number raised to the giving power;
+- *static SlashedDouble pow(SlashedDouble sdnum, SlashedDouble sdpow)* - returns the SlashedDouble that hold value of the number that sdnum holds raised to the giving power that sdpow holds;
+
+You are also may try to use some functionality of SlashedDouble objects - this have many public methods, but no documentation for them is included for now. All I can say, this class is made for slicing standart double value, than separately operating with its parts - an exponent, mantissa and sign - and finally put them all together in double again.
+
+If you want to test MiniMath.pow() - there, in MiniMath.main(), is you can find 2 two level test cycles (yes, 2 cycles with two levels) of *MiniMath.pow()* function according to *java.lang.Math.pow()*, where random numbers and powers in staged manner applying to both of them (amplitudes of numbers and according powers are from 10^38 till 10^-41) and if result is not the same prints it out to the screen.
 
 
 ## License

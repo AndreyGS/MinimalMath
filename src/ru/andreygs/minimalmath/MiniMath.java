@@ -38,30 +38,36 @@ public class MiniMath {
 		} else if (number == Double.NEGATIVE_INFINITY) {
 			if (!sdpow.isOdd()) return new SlashedDouble(Double.POSITIVE_INFINITY);
 			else return new SlashedDouble(Double.NEGATIVE_INFINITY);
-		} else if (power == Double.NEGATIVE_INFINITY) {
-			if (number >= 0) return new SlashedDouble(0.0);
-			else if (number < 0) return new SlashedDouble(-0.0);
 		}
+		
+		power = abs(power);
 		
 		SlashedDouble ipwr;
 		
 		if (sdpow.getExp() > 0xffffffff) {
 			if (sdpow.getExp() > 30) {
-				if (sdnum.getExp() < 0) {
-					if (number < 0) return new SlashedDouble(-0.0);
-					else return new SlashedDouble(0.0);
-				} else {
-					if (number < 0 && sdpow.isOdd()) return new SlashedDouble(Double.NEGATIVE_INFINITY);
+				if ((sdpow.isNegative() && sdnum.getExp() < 0) ||
+					!sdpow.isNegative() && sdnum.getExp() >= 0) {
+					if (sdpow.isOdd() && sdnum.isNegative()) 
+						return new SlashedDouble(Double.NEGATIVE_INFINITY);
 					else return new SlashedDouble(Double.POSITIVE_INFINITY);
+				} else {
+					if (sdpow.isOdd() && sdnum.isNegative())
+						return new SlashedDouble(-0.0);
+					return new SlashedDouble(0.0);
 				}
 			}
+			
 			ipwr = intPower(sdnum, sdpow);
 			
-			if (ipwr.getDouble() != null) return ipwr;
+			if (ipwr.getDouble() != null) {
+				if (sdpow.isNegative()) return getOppositeExtremum(ipwr);
+				else return ipwr;
+			}
 		} else {
 			ipwr = new SlashedDouble(1.0);
 		}
-			
+
 		SlashedDouble fpwr;
 		
 		if (sdpow.getFractRaw().length() > 0) {
@@ -70,38 +76,60 @@ public class MiniMath {
 			fpwr = new SlashedDouble(1.0);
 		}
 		
-		if (fpwr.getDouble() != null) {
-			if (fpwr.getDouble() == Double.POSITIVE_INFINITY || fpwr.getDouble() == Double.NEGATIVE_INFINITY || fpwr.getDouble() == Double.NaN) {
-				return fpwr;
-			} else if (fpwr.getDouble() == 1.0) {
-				return ipwr;
-			} else if (fpwr.getDouble() == 0.0) {
-				return new SlashedDouble(0.0);
-			}
+		if (fpwr.getDouble() != null && fpwr.getDouble() != 1.0) {
+			if (sdpow.isNegative()) return getOppositeExtremum(fpwr);
+			else return fpwr;
 		}
 		
-		return innerMult(ipwr, fpwr, ipwr.getNegativeSign());
+		SlashedDouble finalproduct = innerMult(ipwr, fpwr, ipwr.getNegativeSign());
+		
+		if (sdpow.isNegative()) {
+			
+			return innerDiv(new SlashedDouble(1.0), finalproduct, ipwr.getNegativeSign(), 0);
+		}
+		else return finalproduct;
+	}
+	
+	private static SlashedDouble getOppositeExtremum(SlashedDouble number) {
+		if (number.getDouble() != null) {
+			if (number.getDouble() == Double.POSITIVE_INFINITY)
+				return new SlashedDouble(0.0);
+			else if (number.getDouble() == Double.NEGATIVE_INFINITY)
+				return new SlashedDouble(-0.0);
+			else if (number.getDouble() == 0 && !number.isNegative())
+				return new SlashedDouble(Double.POSITIVE_INFINITY);
+			else if (number.getDouble() == 0 && number.isNegative())
+				return new SlashedDouble(Double.NEGATIVE_INFINITY);
+			else
+				return new SlashedDouble(Double.NaN);
+		} else {
+			return new SlashedDouble(Double.NaN);
+		}
 	}
 	
 	private static SlashedDouble intPower(SlashedDouble number, SlashedDouble power) {
-		long ipwr = power.getIntSD().getIEEE754().longValue();
+		long ipwr = abs(power).getIntSD().getIEEE754().longValue();
 		//out.println(power.getIntSD().getBinaryRaw());
 		SlashedDouble result = new SlashedDouble(1.0);
 
 		if (number.getIEEE754() == -1) {
-			if (ipwr % 2 == 0) return result;
+			if ((ipwr & 1) == 0) return result;
 			else return new SlashedDouble(-1.0);
 		}
 		
 		for (int i = 0; i < intPwr.length; i++) {
 			if ((ipwr & intPwr[i]) == intPwr[i]) {
 				result = innerMult(number, result, "");
+				result = getIntPowerResult(result, power);
+				
 				if (result.getDouble() != null) {
 					if (isNegative(number, power)) result.setSign("-");
 					return result;
 				}
 			}
 			result = innerMult(result, result, "");
+			result = getIntPowerResult(result, power);
+			
 			if (result.getDouble() != null) {
 				if (isNegative(number, power)) result.setSign("-");
 				return result;
@@ -110,15 +138,42 @@ public class MiniMath {
 		
 		if ((ipwr & 1l) == 1l) {
 			result = innerMult(number, result, "");
-			if (result.getDouble() != null) {
-				if (isNegative(number, power)) result.setSign("-");
-				return result;
-			}
+			result = getIntPowerResult(result, power);
 		}
-
+		
+		if (result.getDouble() != null) {
+			if (isNegative(number, power)) result.setSign("-");
+			return result;
+		}
+		
 		if (isNegative(number, power)) result.setSign("-");
 		
 		return result;
+	}
+	
+	private static SlashedDouble getIntPowerResult(SlashedDouble result, SlashedDouble power) {
+		// this check is for extremum values
+		if (result.getExp() > 1024 || result.getExp() < -1075) {
+			// if power is negative there can be an exponent
+			// of denormal numbers, and to hold it correctly
+			// we must to accept powers over 1024 
+			if (power.isNegative()) result = checkExponentExtremum(result, 1075, -1075);
+			else result = checkExponentExtremum(result, 1024, -1075);
+		}
+		
+		return result;
+	}
+	
+	private static SlashedDouble checkExponentExtremum(SlashedDouble number, int max, int min) {
+		// here we only find the abs(extremum) without actual sign
+		// correct sign will be applied in the calling function
+		if (number.getExp() > max) {
+			return new SlashedDouble(Double.POSITIVE_INFINITY);
+		} else if (number.getExp() < min) {
+			return new SlashedDouble(0.0);
+		} else {
+			return number;
+		}
 	}
 	
 	private static boolean isNegative(SlashedDouble number, SlashedDouble power) {
@@ -233,7 +288,7 @@ public class MiniMath {
 		String raw = Long.toBinaryString(result);
 		
 		int resultexp = getMultExponent(raw, number1.getExp(), number2.getExp(), number1.getBinaryRaw(), number2.getBinaryRaw(), biasresult);
-
+/*
 		if (resultexp > 1024) {
 			if (negativesign.equals("-")) return new SlashedDouble(Double.NEGATIVE_INFINITY);
 			else return new SlashedDouble(Double.POSITIVE_INFINITY);
@@ -241,7 +296,7 @@ public class MiniMath {
 			if (negativesign.equals("-")) return new SlashedDouble(-0.0);
 			else return new SlashedDouble(0.0);
 		}
-		
+		*/
 		return new SlashedDouble(raw, resultexp, negativesign, result);
 	}
 
@@ -255,8 +310,7 @@ public class MiniMath {
 		if (exp == 0xffffffff || exp == 0x00000000) {
 			return exp;
 		} else {
-			if (exp % 2 == -1) return exp/2 + 0xffffffff;
-			else return exp/2;
+			return exp >> 1;
 		}
 	}
 
@@ -272,7 +326,7 @@ public class MiniMath {
 			number = innerRoot(number);
 			if (powerraw.charAt(i) == '1') {
 				result = innerMult(number, result, "");
-				if (number.getDouble() != null) return result;
+				if (result.getDouble() != null) return result;
 			}
 		}
 		
@@ -406,20 +460,20 @@ public class MiniMath {
 	}
 	
 	public static Double div(double dividend, double divisor) {
-		SlashedDouble sddend = new SlashedDouble(dividend);
-		SlashedDouble sdsor = new SlashedDouble(divisor);
+		SlashedDouble sddividend = new SlashedDouble(dividend);
+		SlashedDouble sddivisor = new SlashedDouble(divisor);
 		
-		return div(sddend, sdsor).getIEEE754();
+		return div(sddividend, sddivisor).getIEEE754();
 	}
 	
 	public static SlashedDouble div(SlashedDouble dividend, SlashedDouble divisor) {
-		double ddend = dividend.getDouble(), dsor = divisor.getDouble();
+		double dividendnum = dividend.getDouble(), divisornum = divisor.getDouble();
 		
-		if (dsor == 1.0) return dividend;
-		else if (dsor == -1.0) return new SlashedDouble(-ddend);
-		else if (Double.isNaN(dsor) || Double.isNaN(ddend)) return new SlashedDouble(Double.NaN);
-		else if (dsor == 0.0) {
-			if (ddend == 0.0) return new SlashedDouble(Double.NaN);
+		if (divisornum == 1.0) return dividend;
+		else if (divisornum == -1.0) return new SlashedDouble(-dividendnum);
+		else if (Double.isNaN(divisornum) || Double.isNaN(dividendnum)) return new SlashedDouble(Double.NaN);
+		else if (divisornum == 0.0) {
+			if (dividendnum == 0.0) return new SlashedDouble(Double.NaN);
 			else {
 				if (divisor.isNegative() && dividend.isNegative() || 
 					!divisor.isNegative() && !dividend.isNegative()) {
@@ -429,33 +483,33 @@ public class MiniMath {
 				}
 			}
 		} 
-		else if (dsor == Double.POSITIVE_INFINITY) {
-			if (ddend == Double.POSITIVE_INFINITY || ddend == Double.NEGATIVE_INFINITY)
+		else if (divisornum == Double.POSITIVE_INFINITY) {
+			if (dividendnum == Double.POSITIVE_INFINITY || dividendnum == Double.NEGATIVE_INFINITY)
 				return new SlashedDouble(Double.NaN);
 			else if (dividend.isNegative()) return new SlashedDouble(-0.0);
 			else return new SlashedDouble(0.0);
-		} else if (dsor == Double.NEGATIVE_INFINITY) {
-			if (ddend == Double.POSITIVE_INFINITY || ddend == Double.NEGATIVE_INFINITY)
+		} else if (divisornum == Double.NEGATIVE_INFINITY) {
+			if (dividendnum == Double.POSITIVE_INFINITY || dividendnum == Double.NEGATIVE_INFINITY)
 				return new SlashedDouble(Double.NaN);
 			else if (dividend.isNegative()) return new SlashedDouble(0.0);
 			else return new SlashedDouble(-0.0);
-		} else if (ddend == 0.0 && !dividend.isNegative()) {
+		} else if (dividendnum == 0.0 && !dividend.isNegative()) {
 			if (divisor.isNegative()) return new SlashedDouble(-0.0);
 			else return new SlashedDouble(0.0);
-		} else if (ddend == -0.0) {
+		} else if (dividendnum == -0.0) {
 			if (divisor.isNegative()) return new SlashedDouble(0.0);
 			else return new SlashedDouble(-0.0);
-		} else if (ddend == Double.POSITIVE_INFINITY) {
+		} else if (dividendnum == Double.POSITIVE_INFINITY) {
 			if (divisor.isNegative()) return new SlashedDouble(Double.NEGATIVE_INFINITY);
 			else return dividend;
-		} else if (ddend == Double.NEGATIVE_INFINITY) {
+		} else if (dividendnum == Double.NEGATIVE_INFINITY) {
 			if (divisor.isNegative()) return new SlashedDouble(Double.POSITIVE_INFINITY);
 			else return dividend;
 		}
 		
 		String negativesign;
 		
-		if ((ddend >= 0 && dsor >= 0) || (ddend < 0 && dsor < 0)) {
+		if ((dividendnum >= 0 && divisornum >= 0) || (dividendnum < 0 && divisornum < 0)) {
 			negativesign = "";
 		} else {
 			negativesign = "-";
@@ -468,66 +522,112 @@ public class MiniMath {
 	// if (featuresign == 1) - returns result of integer division
 	// if (featuresign == 2) - returns remainder of division
 	private static SlashedDouble innerDiv(SlashedDouble dividend, SlashedDouble divisor, String negativesign, int featuresign) {
-		String dendraw = dividend.getBinaryRaw();
+		String dividendraw = dividend.getBinaryRaw();
 		String checksorraw = divisor.getBinaryRaw();
-		long lsor;
+		long divisorlong;
 		
 		// for simplifying calculation we only use 63 bits of maximum 64 in divisor
 		// and here we cutting off the excess bit and then making simple rounding
 		if (checksorraw.length() == 64) {
 			checksorraw = checksorraw.substring(0, 63);
-			lsor = Long.parseLong(checksorraw);
-			if (checksorraw.charAt(63) == '1') lsor++;
+			divisorlong = Long.parseLong(checksorraw);
+			if (checksorraw.charAt(63) == '1') divisorlong++;
 		} else {
-			lsor = divisor.getLongRaw();
+			divisorlong = divisor.getLongRaw();
 		}
 		
-		int lsorlen = checksorraw.length();
+		int divisorlen = checksorraw.length();
 		
 		// calculating number of required steps
 		int stepnum;
-		if (featuresign == 0) stepnum = 64;
-		else stepnum = dividend.getExp() + ~divisor.getExp() + 2;
+		if (featuresign == 0) stepnum = 63;
+		else stepnum = dividend.getExp() + ~divisor.getExp() + 1;
 		
 		// adding zeros to dividend for necessary length
-		int dendlen = lsorlen + stepnum;
-		for (int i = dendraw.length(); i < dendlen; i++) dendraw += '0';
+		int dividendlen = divisorlen + stepnum;
+		for (int i = dividendraw.length(); i < dividendlen; i++) dividendraw += '0';
 		
 		long minuend, residual;
+		
+		// initialzero is a tag of result of first substraction
+		int initialzero;
 		String quotient = "", residualstr, subzeros;
 		
-		// first step holds a special case
-		minuend = Long.parseUnsignedLong(dendraw.substring(0, lsorlen));
-		residual = minuend + ~lsor + 1;
+		// first step holds a special case and it is a 'zero' step
+		minuend = Long.parseUnsignedLong(dividendraw.substring(0, divisorlen), 2);
+		residual = minuend + ~divisorlong + 1;
 		if (residual > 0xffffffff) {
 			residualstr = Long.toBinaryString(residual);
 			subzeros = "";
-			for (int i = 0, len = lsorlen + ~residualstr.length() + 1; i < len; i++) {
+			for (int i = 0, len = divisorlen + ~residualstr.length() + 1; i < len; i++) {
 				subzeros += "0";
 			}
-			dendraw = subzeros + residualstr + dendraw.substring(lsorlen);
+			dividendraw = subzeros + residualstr + dividendraw.substring(divisorlen);
 			quotient += '1';
+			initialzero = 0;
+		} else {
+			initialzero = 1;
 		}
 		
-		// following steps will produce main result
-		for (int left = 0, right = lsorlen+1; left < stepnum; left++, right++) {
-			minuend = Long.parseUnsignedLong(dendraw.substring(0, right));
-			residual = minuend + ~lsor + 1;
+		// following steps will produce rest of result
+		for (int left = 0, right = divisorlen+1; left < stepnum; left++, right++) {
+			minuend = Long.parseUnsignedLong(dividendraw.substring(0, right), 2);
+			residual = minuend + ~divisorlong + 1;
 			if (residual > 0xffffffff) {
 				residualstr = Long.toBinaryString(residual);
 				subzeros = "";
 				for (int i = 0, len = right + ~residualstr.length() + 1; i < len; i++) {
 					subzeros += "0";
 				}
-				dendraw = subzeros + residualstr + dendraw.substring(lsorlen);
+				dividendraw = subzeros + residualstr + dividendraw.substring(right);
 				quotient += '1';
 			} else {
 				quotient += '0';
 			}
 		}
+
+		int resultexp;
 		
+		if (featuresign == 0) {
+			resultexp = getDivisionExponent(dividend.getExp(), divisor.getExp(), initialzero);	
+		} else {
+			resultexp = getRemainderExponent(dividend.getExp(), dividendraw);
+		}
 		
-		return dividend;
+		if (resultexp > 1024) {
+			if (negativesign.equals("-")) return new SlashedDouble(Double.NEGATIVE_INFINITY);
+			else return new SlashedDouble(Double.POSITIVE_INFINITY);
+		} else if (resultexp < -1075) {
+			if (negativesign.equals("-")) return new SlashedDouble(-0.0);
+			else return new SlashedDouble(0.0);
+		}
+		
+		if (featuresign == 0) {
+			return new SlashedDouble(quotient, resultexp, negativesign);
+		} else {
+			return new SlashedDouble(dividendraw, resultexp, negativesign);
+		}
+	}
+	
+	private static int getDivisionExponent(int dividendexp, int divisorexp, int initialzero) {
+		return dividendexp + ~divisorexp + ~initialzero + 2;
+	}
+	
+	private static int getRemainderExponent(int dividendexp, String dividendraw) {
+		return dividendexp + ~dividendraw.indexOf('1') + 1;
+	}
+	
+	public static Double abs(double number) {
+		SlashedDouble sdnum = new SlashedDouble(number);
+		
+		return abs(sdnum).getIEEE754();
+	}
+	
+	public static SlashedDouble abs(SlashedDouble number) {
+		SlashedDouble sdnum = number.clone();
+		sdnum.setSign("");
+		
+		return sdnum;
 	}
 	
 	public static Double floor(double number) {
@@ -558,7 +658,6 @@ public class MiniMath {
 		double number = floor(sdnum).getIEEE754();
 		
 		if (sdnum.getFractRaw() != null && sdnum.getFractRaw().length() > 0) {
-			out.println(sdnum.getFractRaw());
 			++number;
 			if (number == 0.0) return new SlashedDouble("", 0, "-");
 		} 
@@ -579,34 +678,12 @@ public class MiniMath {
 	
 	public static void main(String[] args) {
 		
-		//double result1 = pow(1.1943599405893073E-43, 5.5913146258311875E-19), result2 = Math.pow(1.1943599405893073E-43, 5.5913146258311875E-19);
+		//double result1 = pow(-1.536411651123631E-11, -9.13352388E8), result2 = Math.pow(-1.536411651123631E-11, -9.13352388E8);
 		//double result1 = pow(7.667063751883245E30, 0.9989203174209581), result2 = Math.pow(7.667063751883245E30, 0.9989203174209581);
 
 		//out.println(result1);
 		//out.println(result2);
 		//0.12537798823403662
-
-//1.1943599405893073E-43!
-//5.5913146258311875E-19
-//0.9999999999999999
-//1.0
-
-
-
-
-		//out.println(Math.pow(1.723877541351934E-8, 2));
-		//out.println(pow(1.723877541351934E-8, 2));
-		//out.println(Long.toBinaryString(Double.doubleToLongBits(-8.26433735220462E35)) + "$$$");
-		//out.println(Long.toBinaryString(Double.doubleToLongBits(result1)));
-		//out.println(Long.toBinaryString(Double.doubleToLongBits(result2)));
-		//out.println(Math.pow(7.667063751883245E30, 0.25));
-		//out.println(Math.pow(7.667063751883245E30, 0.125));
-		//out.println(Math.pow(7.667063751883245E30, 0.0625));
-		//out.println(Math.round)
-		
-		
-		//out.println(Long.toBinaryString(Double.doubleToLongBits(result1)));
-		//out.println(Long.toBinaryString(Double.doubleToLongBits(result2)) + "!!!!");
 		
 		double factor1 = 1000000000000000000000000000000000000000.0, factor2 = 1000000000000000000000000000000000000000.0;
 		int counter = 0;
@@ -618,9 +695,10 @@ public class MiniMath {
 				if (j % 100 == 0) factor2 = factor2 / 10;
 				double num = Math.random()*factor2, power = Math.floor(Math.random()*factor1);
 				if (j % 2 == 0) num = -num;
+				if (j % 3 == 0) power = -power;
 				double result1 = pow(num, power), result2 = Math.pow(num, power);
 				if (result1 != result2 && (!Double.isNaN(result1) && !Double.isNaN(result1))) {
-					if ((Double.toString(result1).length() < 16 || Double.toString(result2).length() < 16 || !Double.toString(result1).substring(0, 16).equals(Double.toString(result2).substring(0, 16))) && !(result1 == 1.0 && result2 == 1.0000000000000002)) {
+					if ((Double.toString(result1).length() < 16 || Double.toString(result2).length() < 16 || !Double.toString(result1).substring(0, 16).equals(Double.toString(result2).substring(0, 16)))) {
 					out.println(num + "!");
 					out.println(power);
 					out.println(result1);
@@ -636,7 +714,6 @@ public class MiniMath {
 		out.println(counter + " results in integer number powers test that have missed accuracy");
 
 
-
 		factor1 = 1000000000000000000000000000000000000000.0;
 		factor2 = 1000000000000000000000000000000000000000.0;
 		counter = 0;
@@ -648,9 +725,10 @@ public class MiniMath {
 				if (j % 100 == 0) factor2 = factor2 / 10;
 				double num = Math.random()*factor2, power = Math.random()*factor1;
 				if (j % 2 == 0) num = -num;
+				if (j % 3 == 0) power = -power;
 				double result1 = pow(num, power), result2 = Math.pow(num, power);
 				if (result1 != result2 && (!Double.isNaN(result1) && !Double.isNaN(result1))) {
-					if ((Double.toString(result1).length() < 16 || Double.toString(result2).length() < 16 || !Double.toString(result1).substring(0, 16).equals(Double.toString(result2).substring(0, 16))) && !(result1 == 1.0 && result2 == 1.0000000000000002)) {
+					if ((Double.toString(result1).length() < 16 || Double.toString(result2).length() < 16 || !Double.toString(result1).substring(0, 16).equals(Double.toString(result2).substring(0, 16))) && !(result1 == 1.0 && result2 == 1.0000000000000002) && (result1 == 1.0000000000000002 && result2 == 1.0) && !(result1 == 0.9999999999999999 && result2 == 1.0) && !(result1 == 1.0 && result2 == 0.9999999999999999)) {
 					out.println(num + "!");
 					out.println(power);
 					out.println(result1);
@@ -667,68 +745,7 @@ public class MiniMath {
 		
 		
 		/*
-		out.println(s);
 		
-		SlashedDouble sd = new SlashedDouble("", 0, "-");
-		out.println(sd.getIEEE754());
-		
-		out.println(Double.toHexString(Double.MIN_NORMAL - Double.MIN_VALUE));
-		double rnd = Math.random() * 6565.0;
-		double rnd2 = Math.random() * 12412.0;
-		SlashedDouble sd1 = new SlashedDouble(rnd);
-		SlashedDouble sd2 = new SlashedDouble(rnd2);
-		out.println(mult(rnd1, rnd2));
-		out.println(rnd * rnd2);
-		*//*
-		out.println(Long.toBinaryString(Double.doubleToLongBits(0.0/0.0)));
-		
-		out.println(Long.toBinaryString(Double.doubleToLongBits(0.0/-0.0)));
-		out.println(Double.POSITIVE_INFINITY/0.0);
-		out.println(Double.POSITIVE_INFINITY/-0.0);
-		out.println(Double.NEGATIVE_INFINITY/0.0);
-		out.println(Double.NEGATIVE_INFINITY/-0.0);
-		out.println(0.0/Double.POSITIVE_INFINITY);
-		out.println(-0.0/Double.POSITIVE_INFINITY);
-		out.println(0.0/Double.NEGATIVE_INFINITY);
-		out.println(-0.0/Double.NEGATIVE_INFINITY);
-		out.println(Double.NaN/0.0);
-		out.println(0.0/Double.NaN);
-		
-		out.println(Math.ceil(-0.0));
-		out.println(ceil(Double.POSITIVE_INFINITY));
-		out.println(Math.ceil(Double.POSITIVE_INFINITY));
-		out.println(ceil(Double.NEGATIVE_INFINITY));
-		out.println(Math.ceil(Double.NEGATIVE_INFINITY));
-		out.println(ceil(Double.NaN));
-		out.println(Math.ceil(Double.NaN));
-		out.println(ceil(234234787897892.57897889890));
-		out.println(Math.ceil(234234787897892.57897889890));
-		out.println(ceil(-0.2));
-		out.println(Math.ceil(-0.2));
-		out.println(ceil(1.2));
-		out.println(Math.ceil(1.2));
-		*//*
-		
-		//out.println(Long.toBinaryString(Double.doubleToLongBits(Double.NaN)));
-		
-		out.println(fraction(0.0));
-		out.println(fraction(-0.0));
-		out.println(fraction(Double.POSITIVE_INFINITY));
-		out.println(fraction(Double.NEGATIVE_INFINITY));
-		out.println(fraction(Double.NaN));
-		out.println(fraction(43534.534580));
-		out.println(fraction(-43534.534580));
-		//out.println(Double.toHexString(234234.578));
-		out.println(fraction(0.2));
-		out.println(fraction(-0.2));
-		out.println(fraction(1.0));
-		out.println(fraction(-1.0));
-		
-		SlashedDouble sd1 = new SlashedDouble("sd", 0, "");
-		out.println(sd1.getIEEE754Bin());
-		out.println(Long.toBinaryString(Double.doubleToLongBits(1.0)));
-		SlashedDouble sd2 = new SlashedDouble(234235662362362.89234);
-		out.println(sd2.getIEEE754Bin());
 		*//*
 		out.println(0.0/0.0);
 		out.println(div(0.0,0.0));
@@ -759,6 +776,7 @@ public class MiniMath {
 		out.println(Double.NaN/1);
 		out.println(div(Double.NaN,1));
 		*/
+		/*0.99999999612078
 		out.println(0.0*0.0);
 		out.println(mult(0.0,0.0));
 		out.println(0.0*-0.0);
@@ -785,21 +803,11 @@ public class MiniMath {
 		out.println(mult(Double.NEGATIVE_INFINITY,5));
 		out.println(0.0*-1);
 		out.println(mult(0.0,-1));
-		out.println(Double.NaN*1);
 		out.println(mult(Double.NaN,1));
 		out.println(Double.POSITIVE_INFINITY*-0.0);
 		out.println(mult(Double.POSITIVE_INFINITY,-0.0));
 		
-		out.println(Math.pow(1, Double.NaN));
-		out.println(Long.toBinaryString(Long.MIN_VALUE - 1));
-		out.println(Long.toBinaryString((Long.MIN_VALUE/65536l)*54686l));
-		long test = (Long.MIN_VALUE/65536l)*54686l;
-		out.println((Long.MAX_VALUE/65465)*2343);
-		out.println(Long.toBinaryString(Long.MIN_VALUE - (Long.MAX_VALUE/6546456455l)));
-		out.println(Long.MIN_VALUE - (Long.MAX_VALUE/6546456455l));
-		
-		out.println(Math.floorDiv(-13, 7));
-		out.println(Math.floorMod(-13, 7));
+		*/
 	}
 	
 	/*

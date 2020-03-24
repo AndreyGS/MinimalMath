@@ -3,7 +3,7 @@ package ru.andreygs.minimalmath;
 import java.util.regex.Pattern;
 import java.util.regex.Matcher;
 
-public class SlashedDouble {
+public class SlashedDouble implements Cloneable {
 	private Double number;
 	
 	private String negativesign;
@@ -36,7 +36,7 @@ public class SlashedDouble {
 		}
 	}
 	
-	public SlashedDouble(Long longraw, Integer exp, String negativesign) {
+	public SlashedDouble(long longraw, int exp, String negativesign) {
 		this.raw = cutFractTail(Long.toBinaryString(longraw));
 		this.exp = exp;
 		this.negativesign = negativesign;
@@ -46,7 +46,7 @@ public class SlashedDouble {
 		this.longraw = Long.parseUnsignedLong(this.raw, 2);
 	}
 	
-	public SlashedDouble(String raw, Integer exp, String negativesign) throws NumberFormatException {
+	public SlashedDouble(String raw, int exp, String negativesign) throws NumberFormatException {
 		this.raw = cutFractTail(fetchRaw(raw));
 		this.exp = exp;
 		this.negativesign = negativesign;
@@ -54,9 +54,26 @@ public class SlashedDouble {
 		checkRaw();
 	}
 	
-	public SlashedDouble(String raw, Integer exp, String negativesign, Long longraw) {
+	public SlashedDouble(String raw, int exp, String negativesign, long longraw) {
 		this(raw, exp, negativesign);
 		this.longraw = Long.parseUnsignedLong(this.raw, 2);
+	}
+	
+	private SlashedDouble(Double number, String negativesign, String raw, Long longraw,
+		String intraw, String fractraw, Integer exp, Integer onesnum, String roundedrawbin,
+		String roundedrawhex, String ieee754bin, String ieee754hex)	{
+		if (number != null) this.number = Double.valueOf(number);
+		if (negativesign != null) this.negativesign = negativesign;
+		if (raw != null) this.raw = raw;
+		if (longraw != null) this.longraw = Long.valueOf(longraw);
+		if (intraw != null) this.intraw = intraw;
+		if (fractraw != null) this.fractraw = fractraw;
+		if (exp != null) this.exp = Integer.valueOf(exp);
+		if (onesnum != null) this.onesnum = Integer.valueOf(onesnum);
+		if (roundedrawbin != null) this.roundedrawbin = roundedrawbin;
+		if (roundedrawhex != null) this.roundedrawhex = roundedrawhex;
+		if (ieee754bin != null) this.ieee754bin = ieee754bin;
+		if (ieee754hex != null)this.ieee754hex = ieee754hex;
 	}
 	
 	private void checkRaw() {
@@ -68,7 +85,7 @@ public class SlashedDouble {
 	
 	
 	public static String fetchRaw(String raw) {
-		Pattern p = Pattern.compile("[01]{0,64}");
+		Pattern p = Pattern.compile("(?<=0{0,}+)[01]{0,63}");
 		Matcher m = p.matcher(raw);
 		m.find();
 
@@ -135,7 +152,7 @@ public class SlashedDouble {
 		String hexraw = "", digit;
 		
 		if (raw.length() < 52) {
-			for (int i = raw.length(); i % 4 != 0; i++) {
+			for (int i = raw.length(); (i & 3) != 0; i++) {
 				raw += "0";
 			}
 		}
@@ -331,6 +348,7 @@ public class SlashedDouble {
 		}
 	}
 	
+	
 	public boolean isNegative() {
 		if (negativesign.equals("-")) return true;
 		else return false;
@@ -345,8 +363,7 @@ public class SlashedDouble {
 	}
 	
 	public void setSign(String sign) {
-		String currentsign = negativesign;
-		if (number != null && currentsign != sign) number = -number;
+		if (number != null && negativesign != sign) number = -number;
 		if (sign.equals("") || sign.equals("-")) negativesign = sign;
 	}
 
@@ -411,5 +428,13 @@ public class SlashedDouble {
 		}
 		
 		return ieee754bin;	
+	}
+	
+	public SlashedDouble clone() {
+		SlashedDouble sdnum = new SlashedDouble(this.number, this.negativesign, this.raw, 
+			this.longraw, this.intraw, this.fractraw, this.exp, this.onesnum, 
+			this.roundedrawbin, this.roundedrawhex, this.ieee754bin, this.ieee754hex);
+		
+		return sdnum;
 	}
 }
