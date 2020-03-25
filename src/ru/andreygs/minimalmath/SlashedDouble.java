@@ -47,7 +47,7 @@ public class SlashedDouble implements Cloneable {
 	}
 	
 	public SlashedDouble(String raw, int exp, String negativesign) throws NumberFormatException {
-		this.raw = cutFractTail(fetchRaw(raw));
+		this.raw = cutFractTail(parseRaw(raw));
 		this.exp = exp;
 		this.negativesign = negativesign;
 		
@@ -63,17 +63,17 @@ public class SlashedDouble implements Cloneable {
 		String intraw, String fractraw, Integer exp, Integer onesnum, String roundedrawbin,
 		String roundedrawhex, String ieee754bin, String ieee754hex)	{
 		if (number != null) this.number = Double.valueOf(number);
-		if (negativesign != null) this.negativesign = negativesign;
-		if (raw != null) this.raw = raw;
+		this.negativesign = negativesign;
+		this.raw = raw;
 		if (longraw != null) this.longraw = Long.valueOf(longraw);
-		if (intraw != null) this.intraw = intraw;
-		if (fractraw != null) this.fractraw = fractraw;
+		this.intraw = intraw;
+		this.fractraw = fractraw;
 		if (exp != null) this.exp = Integer.valueOf(exp);
 		if (onesnum != null) this.onesnum = Integer.valueOf(onesnum);
-		if (roundedrawbin != null) this.roundedrawbin = roundedrawbin;
-		if (roundedrawhex != null) this.roundedrawhex = roundedrawhex;
-		if (ieee754bin != null) this.ieee754bin = ieee754bin;
-		if (ieee754hex != null)this.ieee754hex = ieee754hex;
+		this.roundedrawbin = roundedrawbin;
+		this.roundedrawhex = roundedrawhex;
+		this.ieee754bin = ieee754bin;
+		this.ieee754hex = ieee754hex;
 	}
 	
 	private void checkRaw() {
@@ -83,13 +83,16 @@ public class SlashedDouble implements Cloneable {
 		}
 	}
 	
-	
-	public static String fetchRaw(String raw) {
+	public static String parseRaw(String raw) {
 		Pattern p = Pattern.compile("(?<=0{0,}+)[01]{0,63}");
 		Matcher m = p.matcher(raw);
 		m.find();
 
 		return m.group();
+	}
+	
+	public static String parseRaw(String raw, int start, int end) {
+		return parseRaw(raw.substring(start, end));
 	}
 	
 	private void slashIt() {
