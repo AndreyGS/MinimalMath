@@ -8,7 +8,7 @@ For now we have 2 classes, one is *ru.andreygs.minimalmath.MiniMath* - this is t
 
 ## Current stage
 
-As project is started not so along ago (at least it's true for time when I writing these lines ^)), not very much is made. But, there is a working MiniMath.pow() method, which can handle for now almost all numbers and positive degrees to produce fully-correct result according to IEEE754 standart (test will give more than 99.9999% among all incoming *double* values are strictly equal to those that are receiving from *java.lang.Math.pow()* (for 12 decimal digits after decimal point and about 99.995% for 13 digits)).
+There are several working methods already done. One of which is MiniMath.pow() method, that can handle any valid double values as input number and power to produce fully-correct result according to IEEE754 standart (test will give more than 99.9999% among all incoming *double* values are strictly equal to those that are receiving from *java.lang.Math.pow()* (for 12 decimal digits after decimal point and about 99.995% for 13 digits)). Also MiniMath.division(), which also takes a part in MiniMath.pow() when negative power is aplied, for alone demonstrate 100% accuracy on any input of double values except these that result to numbers between +-(10^-307 - 10^-311): there present some little accuracy missing. The main list of working methods is introduced in 'How to use' section.
 
 ## So, for what?
 
@@ -21,11 +21,15 @@ There is a several working methods that may get an interest of some kind in Mini
 - *static Double abs(double number)* - returns absolute value of a giving double number;
 - *static SlashedDouble abs(SlashedDouble number)* - returns SlashedDouble that holds absolute value of number that argument holds;
 - *static Double floor(double number)* - returns the largest (closest to positive infinity) double value that is less than or equal to the argument and is equal to a mathematical integer.
-- *static SlashedDouble floor(SlashedDouble sdnum)* - returns the SlashedDouble that hold largest (closest to positive infinity) double value that is less than or equal to the number that argument holds, and is equal to a mathematical integer;
+- *static SlashedDouble floor(SlashedDouble number)* - returns the SlashedDouble that hold largest (closest to positive infinity) double value that is less than or equal to the number that argument holds, and is equal to a mathematical integer;
 - *static Double ceil(double number)* - returns the smallest (closest to negative infinity) double value that is greater than or equal to the argument and is equal to a mathematical integer;
-- *static SlashedDouble ceil(SlashedDouble sdnum)* - returns the SlashedDouble that holds the smallest (closest to negative infinity) double value that is greater than or equal to the number that argument holds, and is equal to a mathematical integer;
+- *static SlashedDouble ceil(SlashedDouble number)* - returns the SlashedDouble that holds the smallest (closest to negative infinity) double value that is greater than or equal to the number that argument holds, and is equal to a mathematical integer;
 - *static Double fraction(double number)* - returns fractional part of double number that is closest to zero;
-- *static SlashedDouble fraction(SlashedDouble sdnum)* - returns SlashedDouble that holds fractional part of number that argument holds, that is closest to zero;
+- *static SlashedDouble fraction(SlashedDouble number)* - returns SlashedDouble that holds fractional part of number that argument holds, that is closest to zero;
+- *static Double sum(double number1, double number2)* - summing as it is;
+- *static SlashedDouble sum(SlashedDouble number1, SlashedDouble number2)* - summing as it is;
+- *static Double substract(double minuend, double subtrahend)* - substraction;
+- *static SlashedDouble substract(SlashedDouble minuend, SlashedDouble subtrahend)* - substraction;
 - *static Double mult(double number1, double number2)* - makes a multiplication;
 - *static SlashedDouble mult(SlashedDouble number1, SlashedDouble number2)* - makes a multiplication;
 - *static Double division(double dividend, double divisor)* - makes a division;
@@ -33,16 +37,17 @@ There is a several working methods that may get an interest of some kind in Mini
 - *static Double div(double dividend, double divisor)* - makes an integer division;
 - *static SlashedDouble div(SlashedDouble dividend, SlashedDouble divisor)* - makes an integer division;
 - *static Double floorDiv(double dividend, double divisor)* - makes an integer floor division;
-- *static static SlashedDouble floorDiv(SlashedDouble dividend, SlashedDouble divisor)* - makes an integer floor division;
+- *static SlashedDouble floorDiv(SlashedDouble dividend, SlashedDouble divisor)* - makes an integer floor division;
 - *static Double divisionRemainder(double dividend, double divisor)* - returns remainder of division;
 - *static SlashedDouble divisionRemainder(SlashedDouble dividend, SlashedDouble divisor)* - returns remainder of division;
+- *static Double floorMod(double dividend, double divisor)* - returns the floor modulus of the inputed arguments;
+- *static SlashedDouble floorMod(SlashedDouble dividend, SlashedDouble divisor)* - returns the floor modulus of the values that holds inputed arguments;
 - *static Double pow(double number, double power)* - returns the value of the number raised to the giving power;
-- *static SlashedDouble pow(SlashedDouble sdnum, SlashedDouble sdpow)* - returns the SlashedDouble that hold value of the number that sdnum holds raised to the giving power that sdpow holds;
+- *static SlashedDouble pow(SlashedDouble number, SlashedDouble power)* - returns the SlashedDouble that hold value of the number that power holds raised to the giving power that sdpow holds;
 
 You are also may try to use some functionality of SlashedDouble objects - this have many public methods, but no documentation for them is included for now. All I can say, this class is made for slicing standart double value, than separately operating with its parts - an exponent, mantissa and sign - and finally put them all together in double again.
 
-If you want to test MiniMath.pow() - there, in MiniMath.main(), is you can find 2 two level test cycles (yes, 2 cycles with two levels) of *MiniMath.pow()* function according to *java.lang.Math.pow()*, where random numbers and powers in staged manner applying to both of them (amplitudes of numbers and according powers are from 10^40 till 10^-39) and if result is not the same prints it out to the screen.
-
+If you want to test MiniMath.pow() - there, in MiniMath.main(), is you can find 2 two level test cycles (yes, 2 cycles with two levels) of *MiniMath.pow()* function according to *java.lang.Math.pow()*, where random numbers and powers in staged manner applying to both of them (amplitudes of numbers and according powers are from 10^40 till 10^-39) and if result is not the same prints it out to the screen. Also there are tests for all main funcitons and if you wish to try them - you need to uncomment it. For now it is a bit of a mess in MiniMath.main(). Probably a little bit later I'll move all these test in a separate junit class.
 
 ## License
 

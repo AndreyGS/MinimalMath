@@ -4,7 +4,6 @@ import static java.lang.System.*;
 
 import java.util.regex.Pattern;
 import java.util.regex.Matcher;
-//import java.
 
 public class MiniMath {
 	private static long[] intPwr = 
@@ -236,7 +235,7 @@ public class MiniMath {
 	}
 	
 	private static SlashedDouble innerMult(SlashedDouble number1, SlashedDouble number2, String negativesign) {
-		long result = 0l, unit;
+		long product = 0l, unit;
 		String num2raw;
 		
 		if (number1.onesEnum() < number2.onesEnum()) {
@@ -247,7 +246,7 @@ public class MiniMath {
 			num2raw = number2.getBinaryRaw();
 		}
 		
-		int biasresult = 0; 
+		int biasproduct = 0; 
 
 		for (int i = num2raw.length() + 0xffffffff, shift = 0, check, spaceneed, leadzeroes, carry; i > 0xffffffff; i+= 0xffffffff, shift++) {
 			String test;
@@ -263,40 +262,40 @@ public class MiniMath {
 						unit >>>= 1;
 						unit += carry;
 						spaceneed = ~check + 1;
-						if (result > 0) {
-							if (Long.numberOfTrailingZeros(result) == 0) carry = 1;
-							result >>>= 1;
-							result += carry;
+						if (product > 0) {
+							if (Long.numberOfTrailingZeros(product) == 0) carry = 1;
+							product >>>= 1;
+							product += carry;
 						}
-						biasresult += shift + 1;
+						biasproduct += shift + 1;
 					} else {
 						unit <<= leadzeroes + 0xffffffff;
 						spaceneed = ~check + 1;
-						test = Long.toBinaryString(result);
+						test = Long.toBinaryString(product);
 						if (test.length() >= spaceneed) {
 							if (test.charAt(test.length()+check) == '1') carry = 1;
 						}
-						result >>>= spaceneed;
-						result += carry;
-						biasresult += spaceneed;
+						product >>>= spaceneed;
+						product += carry;
+						biasproduct += spaceneed;
 					}
 				}
-				result += unit;
+				product += unit;
 				shift = 0;
 			}
 		}
 
-		String raw = Long.toBinaryString(result);
+		String raw = Long.toBinaryString(product);
 		
-		int resultexp = getMultExponent(raw, number1.getExp(), number2.getExp(), number1.getBinaryRaw(), number2.getBinaryRaw(), biasresult);
+		int productexp = getMultExponent(raw, number1.getExp(), number2.getExp(), number1.getBinaryRaw(), number2.getBinaryRaw(), biasproduct);
 
-		return new SlashedDouble(raw, resultexp, negativesign, result);
+		return new SlashedDouble(raw, productexp, negativesign, product);
 	}
 
-	private static int getMultExponent(String raw, int exp1, int exp2, String num1raw, String num2raw, int biasresult) {
+	private static int getMultExponent(String raw, int exp1, int exp2, String num1raw, String num2raw, int biasproduct) {
 		int fractdigitsnum = num1raw.length() + num2raw.length() + 0xfffffffe;
 
-		return raw.length() + ~fractdigitsnum + exp1 + exp2 + biasresult;
+		return raw.length() + ~fractdigitsnum + exp1 + exp2 + biasproduct;
 	}
 
 	private static SlashedDouble fractPower(SlashedDouble number, SlashedDouble power) {
@@ -605,8 +604,6 @@ public class MiniMath {
 		return result;
 	}
 	
-	
-	
 	private static SlashedDouble remainderPreCheck(SlashedDouble dividend, SlashedDouble divisor) {
 		double dividendnum = dividend.getDouble(), divisornum = divisor.getDouble();
 		
@@ -622,6 +619,47 @@ public class MiniMath {
 		return null;
 	}
 	
+	public static Double floorMod(double dividend, double divisor) {
+		return floorMod(new SlashedDouble(dividend), new SlashedDouble(divisor)).getIEEE754();
+	}
+	
+	public static SlashedDouble floorMod(SlashedDouble dividend, SlashedDouble divisor) {
+		SlashedDouble result = floorDiv(dividend, divisor);
+		
+		
+		if (result.getDouble() != null) {
+			if (result.getDouble() == Double.NaN) return result;
+			else if (result.getDouble() == Double.POSITIVE_INFINITY || 
+				result.getDouble() == Double.NEGATIVE_INFINITY) {
+				if (dividend.getDouble() == Double.POSITIVE_INFINITY || dividend.getDouble() == Double.NEGATIVE_INFINITY)
+					return new SlashedDouble(Double.NaN);
+				else return dividend;
+			} else if (result.getDouble() == 0.0) {
+				
+				return dividend;
+			}
+		}
+		
+		String negativesign;
+		if ((!result.isNegative() && !divisor.isNegative()) ||
+			result.isNegative() && divisor.isNegative()) negativesign = "";
+		else negativesign = "-";
+		
+		result = innerMult(divisor, result, negativesign);
+		result = checkExponentExtremum(result, 1024, -1075);
+		if (result.getDouble() != null) {
+			if (result.getDouble() == Double.POSITIVE_INFINITY) {
+				if (negativesign.isEmpty()) return new SlashedDouble(Double.NEGATIVE_INFINITY);
+				else return result;
+			} else {
+				if (negativesign.isEmpty()) result.setSign("-");
+				else result.setSign("");
+			}
+		}
+		
+		return innerSub(dividend, result);
+	}
+	
 	// if (featuresign == 0) - returns result of full division
 	// if (featuresign == 1) - returns result of integer division
 	// if (featuresign == 2) - returns result of integer division toward negative infinity rounding
@@ -634,9 +672,9 @@ public class MiniMath {
 		// for simplifying calculation we only use 63 bits of maximum 64 in divisor
 		// and here we cutting off the excess bit and then making simple rounding
 		if (checksorraw.length() == 64) {
-			checksorraw = checksorraw.substring(0, 63);
-			divisorlong = Long.parseLong(checksorraw);
+			divisorlong = Long.parseLong(checksorraw.substring(0, 63), 2);
 			if (checksorraw.charAt(63) == '1') divisorlong++;
+			checksorraw = checksorraw.substring(0, 63);
 		} else {
 			divisorlong = divisor.getLongRaw();
 		}
@@ -727,62 +765,54 @@ public class MiniMath {
 	}
 	
 	public static Double abs(double number) {
-		SlashedDouble sdnum = new SlashedDouble(number);
-		
-		return abs(sdnum).getIEEE754();
+		return abs(new SlashedDouble(number)).getIEEE754();
 	}
 	
 	public static SlashedDouble abs(SlashedDouble number) {
-		SlashedDouble sdnum = number.clone();
-		sdnum.setSign("");
+		SlashedDouble numberclone = number.clone();
+		numberclone.setSign("");
 		
-		return sdnum;
+		return numberclone;
 	}
 	
-	public static Double floor(double number) {
-		SlashedDouble sdnum = new SlashedDouble(number);
-		
-		return floor(sdnum).getIEEE754(); 
+	public static Double floor(double number) {	
+		return floor(new SlashedDouble(number)).getIEEE754(); 
 	}
 	
-	public static SlashedDouble floor(SlashedDouble sdnum) {
-		double number = sdnum.getIntSD().getIEEE754();
+	public static SlashedDouble floor(SlashedDouble number) {
+		double dblnumber = number.getIntSD().getIEEE754();
 		
-		if (Double.isNaN(number) || number == Double.POSITIVE_INFINITY || 
-			number == Double.NEGATIVE_INFINITY || sdnum.getNegativeSign().isEmpty())
-			return sdnum.getIntSD();
+		if (Double.isNaN(dblnumber) || dblnumber == Double.POSITIVE_INFINITY || 
+			dblnumber == Double.NEGATIVE_INFINITY || number.getNegativeSign().isEmpty())
+			return number.getIntSD();
 		else {
-			if (sdnum.getFractRaw().length() > 0) return new SlashedDouble(number + 0xffffffff);
-			else return sdnum.getIntSD();
+			if (number.getFractRaw().length() > 0) return new SlashedDouble(dblnumber + 0xffffffff);
+			else return number.getIntSD();
 		}
 	}
 	
 	public static Double ceil(double number) {
-		SlashedDouble sdnum = new SlashedDouble(number);
-		
-		return ceil(sdnum).getIEEE754(); 
+		return ceil(new SlashedDouble(number)).getIEEE754(); 
 	}
 	
-	public static SlashedDouble ceil(SlashedDouble sdnum) {
-		double number = floor(sdnum).getIEEE754();
+	public static SlashedDouble ceil(SlashedDouble number) {
+		double dblnumber = floor(number).getIEEE754();
 		
-		if (sdnum.getFractRaw() != null && sdnum.getFractRaw().length() > 0) {
-			++number;
-			if (number == 0.0) return new SlashedDouble("", 0, "-");
+		if (number.getFractRaw() != null && number.getFractRaw().length() > 0) {
+			++dblnumber;
+			if (dblnumber == 0.0) return new SlashedDouble("", 0, "-");
 		} 
 		
-		return new SlashedDouble(number);
+		return new SlashedDouble(dblnumber);
 	}
 	
 	// this method returns value of fractional part that is closest to zero
 	public static Double fraction(double number) {
-		SlashedDouble sdnum = new SlashedDouble(number);
-		
-		return fraction(sdnum).getIEEE754(); 
+		return fraction(new SlashedDouble(number)).getIEEE754(); 
 	}
 	
-	public static SlashedDouble fraction(SlashedDouble sdnum) {
-		return sdnum.getFractSD();
+	public static SlashedDouble fraction(SlashedDouble number) {
+		return number.getFractSD();
 	}
 	
 	public static Double substract(double minuend, double subtrahend) {
@@ -804,6 +834,12 @@ public class MiniMath {
 			return new SlashedDouble(Double.NEGATIVE_INFINITY);
 		else if (subtrahendnum == Double.NEGATIVE_INFINITY)
 			return new SlashedDouble(Double.POSITIVE_INFINITY);
+		else if (subtrahendnum == 0.0) return minuend;
+		else if (minuendnum == 0.0)  {
+			SlashedDouble clonesubtrahend = subtrahend.clone();
+			clonesubtrahend.reverseSign();
+			return clonesubtrahend;
+		}
 		
 		SlashedDouble result = innerSub(minuend, subtrahend);
 		result = checkExponentExtremum(result, 1024, -1075);
@@ -812,33 +848,51 @@ public class MiniMath {
 	}
 	
 	private static SlashedDouble innerSub(SlashedDouble minuend, SlashedDouble subtrahend) {
-		SlashedDouble result;
-		/*
-		if (subtrahend.getExp() + 63 < minuend.getExp()) return minuend;
-		else if (minuend.getExp() + 63 < subtrahend.getExp()) {
-			result = minuend.clone();
-			if (result.isNegative) result.setSign("");
-			else result.setSign("-");
-			return result;
-		}*/
+		// because we want to hold SlashedDouble format with inner methods, 
+		// we must to keep raw format as it is, and do not evaluate double value
+		// cause it may not exist for this time (if we calling .getDouble(),
+		// or if we call .getIEEE754() it may brings current object to unwanted mutation
+		if (minuend.getBinaryRaw().length() == 0) {
+			if (subtrahend.getBinaryRaw().length() > 0) {
+				SlashedDouble subclone = subtrahend.clone();
+				subclone.reverseSign();
+				return subclone;
+			} else return minuend;
+		}
+		if (subtrahend.getBinaryRaw().length() == 0) return minuend;
 		
+		if ((!minuend.isNegative() && subtrahend.isNegative())) {
+			SlashedDouble number2 = subtrahend.clone();
+			number2.setSign("");
+			return innerSum(minuend, number2);
+		}
+		if (minuend.isNegative() && !subtrahend.isNegative()) {
+			SlashedDouble number2 = subtrahend.clone();
+			number2.setSign("-");
+			return innerSum(minuend, number2);
+		}
+		
+		String negativesign = "";
 		String minraw, subraw;
 		int minexp, subexp;
-		boolean changesign;
+		
 		if (subtrahend.getExp() > minuend.getExp()) {
 			minraw = subtrahend.getBinaryRaw(); subraw = minuend.getBinaryRaw();
 			minexp = subtrahend.getExp(); subexp = minuend.getExp();
-			changesign = true;
+			if (subtrahend.isNegative()) negativesign = "";
+			else negativesign = "-";
 		} else {
 			minraw = minuend.getBinaryRaw(); subraw = subtrahend.getBinaryRaw();
 			minexp = minuend.getExp(); subexp = subtrahend.getExp();
-			changesign = false;
+			if (minuend.isNegative()) negativesign = "-";
+			else negativesign = "";
 		}
 		
 		String prezeros = "";
 		int expdiff = minexp + ~subexp + 1;
-		for (int i = 0; i < expdiff; i++) prezeros += '0';
+		for (int i = 0; i < expdiff && i < 64; i++) prezeros += '0';
 		subraw = prezeros + subraw;
+		for (int i = subraw.length(); i < minraw.length(); i++) subraw += '0';
 		
 		int len;
 		if (subraw.length() > 64) { subraw = subraw.substring(0, 64); len = 64; }
@@ -848,55 +902,206 @@ public class MiniMath {
 		long minlong = Long.parseUnsignedLong(minraw, 2);
 		long sublong = Long.parseUnsignedLong(subraw, 2);
 		
-		return null;
+		long residual = minlong + ~sublong + 1;
+
+		// we must to reverse long if it's negative and if subtrahend is less than 64 chars
+		if (residual < 0) {
+			if (subraw.indexOf('1') == 0) residual = ~residual + 1;
+			// and also if (minexp == subexp) we need to change sign of result
+			if (minexp == subexp) {
+				if (negativesign.isEmpty()) negativesign = "-";
+				else negativesign = "";
+			}
+		}
 		
+		String residualstr = Long.toBinaryString(residual);
+		int resultexp = getSubstractionExponent(residualstr, minexp, subexp, minraw);
+		
+		return new SlashedDouble(residualstr, resultexp, negativesign);
+	}
+	
+	private static int getSubstractionExponent(String residualstr, int minexp, int subexp, String minraw) {
+		if (residualstr.indexOf('1') == 0xffffffff) return 0;
+		if (minraw.indexOf('1') == 0xffffffff) return subexp;
+		
+		return minexp + ~(minraw.length() + ~residualstr.length() + 1) + 1;
+	}
+	
+	public static Double sum(double number1, double number2) {
+		return sum(new SlashedDouble(number1), new SlashedDouble(number2)).getIEEE754();
+	}
+	
+	public static SlashedDouble sum(SlashedDouble number1, SlashedDouble number2) {
+		double dblnumber1 = number1.getDouble(), dblnumber2 = number2.getDouble();
+		
+		if (Double.isNaN(dblnumber1) || Double.isNaN(dblnumber2))
+			return new SlashedDouble(Double.NaN);
+		if (dblnumber1 == Double.POSITIVE_INFINITY) {
+			if (dblnumber2 == Double.NEGATIVE_INFINITY) return new SlashedDouble(Double.NaN);
+			else return number1;
+		} else if (dblnumber1 == Double.NEGATIVE_INFINITY) {
+			if (dblnumber2 == Double.POSITIVE_INFINITY) return new SlashedDouble(Double.NaN);
+			else return number1;
+		} else if (dblnumber2 == Double.POSITIVE_INFINITY || 
+			dblnumber2 == Double.NEGATIVE_INFINITY) 
+			return number2;
+			
+		return innerSum(number1, number2);
+	}
+	
+	private static SlashedDouble innerSum(SlashedDouble number1, SlashedDouble number2) {
+		if (number1.getBinaryRaw().length() == 0) {
+			if (number2.getBinaryRaw().length() == 0 && number2.isNegative()) {
+				SlashedDouble num2clone = number2.clone();
+				number2.setSign("");
+				return number2;
+			}	
+			else return number2;
+		} else if (number2.getBinaryRaw().length() == 0) return number1;
+		
+		if (!number1.isNegative() && number2.isNegative()) {
+			SlashedDouble subtrahend = number2.clone();
+			subtrahend.setSign("");
+			return innerSub(number1, subtrahend);
+		}
+		if (number1.isNegative() && !number2.isNegative()) {
+			SlashedDouble subtrahend = number1.clone();
+			subtrahend.setSign("");
+			return innerSub(number2, subtrahend);
+		} 
+		
+		String negativesign;
+		if (number1.isNegative()) negativesign = "-";
+		else negativesign = "";
+		
+		String num1raw, num2raw;
+		int num1exp, num2exp;
+		
+		if (number2.getExp() > number1.getExp()) {
+			num1raw = number2.getBinaryRaw(); num2raw = number1.getBinaryRaw();
+			num1exp = number2.getExp(); num2exp = number1.getExp();
+		} else {
+			num1raw = number1.getBinaryRaw(); num2raw = number2.getBinaryRaw();
+			num1exp = number1.getExp(); num2exp = number2.getExp();
+		}
+		
+		String prezeros = "";
+		int expdiff = num1exp + ~num2exp + 1;
+		for (int i = 0; i < expdiff && i < 64; i++) prezeros += '0';
+		num2raw = prezeros + num2raw;
+		for (int i = num2raw.length(); i < num1raw.length(); i++) num2raw += '0';
+		
+		int len;
+		if (num2raw.length() > 64) { num2raw = num2raw.substring(0, 64); len = 64; }
+		else len = num2raw.length();
+		for (int i = num1raw.length(); i < len; i++) num1raw += '0';
+
+		long num1long = Long.parseUnsignedLong(num1raw, 2);
+		long num2long = Long.parseUnsignedLong(num2raw, 2);
+		
+		long sum = num1long + num2long;
+		
+		String sumstr = Long.toBinaryString(sum);
+		
+		if (sumstr.length() > num1raw.length()) num1exp++;
+		// if there is overflow we need to handle it correctly
+		else if (sumstr.length() < num1raw.length()) {
+			prezeros = "";
+			for (int i = sumstr.length(); i < num1raw.length(); i++) prezeros += '0';
+			sumstr = '1' + prezeros + sumstr;
+			if (sumstr.length() > 64 && sumstr.charAt(64) == '1') {
+				sumstr = sumstr.substring(0, 64);
+				sum = Long.parseUnsignedLong(sumstr, 2);
+				sum++;
+				sumstr = Long.toBinaryString(sum);
+			}
+			num1exp++;
+		}
+
+		return new SlashedDouble(sumstr, num1exp, negativesign);
 	}
 	
 	public static void main(String[] args) {
 		
 		//double result1 = pow(-1.536411651123631E-11, -9.13352388E8), result2 = Math.pow(-1.536411651123631E-11, -9.13352388E8);
 		//double result1 = pow(7.667063751883245E30, 0.9989203174209581), result2 = Math.pow(7.667063751883245E30, 0.9989203174209581);
-		
+		//int num1 = (int)3.990269757488364, num2 = (int)56.22729352873485;
+		///out.println(num1);
+		//out.println(num2);
+		//out.println(Long.toBinaryString(Double.doubleToLongBits(8.130598857682476E184)));
+		//out.println(Long.toBinaryString(Double.doubleToLongBits(-7.180234729036432E188)));
+		SlashedDouble sd = new SlashedDouble(Double.NaN);
+		sd.reverseSign();
+		out.println(sum(-5.616669982090663E72,-5.789118513342766E76));
+		out.println(-5.616669982090663E72 + -5.789118513342766E76);
+		out.println(Long.toBinaryString(Double.doubleToLongBits(-9.333742643622224E-302)));
+		//out.println(sum(-10,-5));
+		//out.println(Long.toBinaryString(Double.doubleToLongBits(8.130598857682476E184 - -7.180234729036432E188)));
+		//out.println(Math.floorMod(3, 56));
+
+
 		
 		/*
-		out.println(Double.NEGATIVE_INFINITY - Double.NEGATIVE_INFINITY);
-		//0
-		out.println(Math.floorMod(7,-1));
-		//0
-		out.println(7 % 1);
-		//0
-		out.println(Math.floorMod(7, 1));
-		out.println(-7 % -1);
-		//0
-		out.println(Math.floorMod(-7,-1));
-		//0
-		out.println(-7 % 1);
-		//0
-		out.println(Math.floorMod(-7, 1));
-		//0
-		out.println(1 % 7);
-		//1
-		out.println(Math.floorMod(1,7));
-		//1
-		out.println(-1 % 7);
-		//-1
-		out.println(Math.floorMod(-1, 7));
-		//6
-		out.println(-4.0 % -4.0);
-		out.println(divisionRemainder(-11.034, 11.034));
-		//0
-		out.println(Math.floorMod(0, 5));
-		out.println(floorDiv(0, -5) + "!");
-		out.println(Math.floorDiv(0, -5) + "!");
-		out.println(7 % 0);
-		//0
-		//out.println(Math.floorMod(7, 0));
-		//0
-		//out.println(SlashedDouble.parseRaw("sdvsd110101sfdsd", 6, 15));
-		//out.println(result1);
-		//out.println(result2);
-		//0.12537798823403662
+		double factor1 = 1.0E308, factor2;
+		int counter = 0;
+		for (int i = 0; i < 650; i++) {
+			factor1 = factor1 / 10; out.println(factor1 + " sum factor");
+			out.println("");
+			factor2 = 1.0E308;
+			for (int j = 0; j < 6500; j++) {
+				if (j % 10 == 0) factor2 = factor2 / 10;
+				double number1 = Math.random()*factor2, number2 = Math.random()*factor1;
+				if (j % 2 == 0) number1 = -number1;
+				if (j % 3 == 0) number2 = -number2;
+				double result1 = sum(number1, number2), result2 = number1 + number2;
+				if (result1 != result2 && (!Double.isNaN(result1) && !Double.isNaN(result1))) {
+					if ((Double.toString(result1).length() < 15 || Double.toString(result2).length() < 15 || !Double.toString(result1).substring(0, 15).equals(Double.toString(result2).substring(0, 15)))) {
+						out.println(number1 + "!");
+						out.println(number2);
+						out.println(result1);
+						out.println(result2);
+						out.println(Long.toBinaryString(Double.doubleToLongBits(result1)));
+						out.println(Double.toHexString(result2));
+						counter++;
+					}
+				}
+			}
+		}
+
+		
+		out.println(counter + " results in summing test that have missed accuracy");
 		*/
+		/*
+		double factor1 = 1.0E308, factor2;
+		int counter = 0;
+		for (int i = 0; i < 650; i++) {
+			factor1 = factor1 / 10; out.println(factor1 + " minuend factor");
+			out.println("");
+			factor2 = 1.0E308;
+			for (int j = 0; j < 6500; j++) {
+				if (j % 10 == 0) factor2 = factor2 / 10;
+				double minuend = Math.random()*factor2, subtrahend = Math.random()*factor1;
+				if (j % 2 == 0) minuend = -minuend;
+				if (j % 3 == 0) subtrahend = -subtrahend;
+				double result1 = substract(minuend, subtrahend), result2 = minuend - subtrahend;
+				if (result1 != result2 && (!Double.isNaN(result1) && !Double.isNaN(result1))) {
+					if ((Double.toString(result1).length() < 15 || Double.toString(result2).length() < 15 || !Double.toString(result1).substring(0, 15).equals(Double.toString(result2).substring(0, 15)))) {
+						out.println(minuend + "!");
+						out.println(subtrahend);
+						out.println(result1);
+						out.println(result2);
+						out.println(Long.toBinaryString(Double.doubleToLongBits(result1)));
+						out.println(Double.toHexString(result2));
+						counter++;
+					}
+				}
+			}
+		}
+		
+		out.println(counter + " results in substraction test that have missed accuracy");
+		*/
+	
+		/*
 		double factor1 = 100000000000000000000000000000000000000000.0, factor2;
 		int counter = 0;
 		for (int i = 0; i < 80; i++) {
@@ -929,7 +1134,7 @@ public class MiniMath {
 		factor1 = 100000000000000000000000000000000000000000.0;
 
 		counter = 0;
-		for (int i = 0; i < 60; i++) {
+		for (int i = 0; i < 80; i++) {
 			factor1 = factor1 / 10; out.println(factor1 + " power random factor");
 			out.println("");
 			factor2 = 100000000000000000000000000000000000000000.0;
@@ -954,71 +1159,189 @@ public class MiniMath {
 		}
 		
 		out.println(counter + " results in real number powers test that have missed accuracy");
-		
-		
-		/*
-		
-		*//*
-		out.println(0.0/0.0);
-		out.println(div(0.0,0.0));
-		out.println(0.0/-0.0);
-		out.println(div(0.0,-0.0));
-		out.println(0.0/Double.POSITIVE_INFINITY);
-		out.println(div(0.0,Double.POSITIVE_INFINITY));
-		out.println(0.0/Double.NEGATIVE_INFINITY);
-		out.println(div(0.0,Double.NEGATIVE_INFINITY));
-		out.println(2/1);
-		out.println(div(2,1));
-		out.println(2/-1);
-		out.println(div(2,-1));
-		out.println(-2/1);
-		out.println(div(-2,1));
-		out.println(-2/-1);
-		out.println(div(-2,-1));
-		out.println(Double.POSITIVE_INFINITY/-5);
-		out.println(div(Double.POSITIVE_INFINITY,-5));
-		out.println(Double.POSITIVE_INFINITY/5);
-		out.println(div(Double.POSITIVE_INFINITY,5));
-		out.println(Double.NEGATIVE_INFINITY/-5);
-		out.println(div(Double.NEGATIVE_INFINITY,-5));
-		out.println(Double.NEGATIVE_INFINITY/5);
-		out.println(div(Double.NEGATIVE_INFINITY,5));
-		out.println(0.0/-1);
-		out.println(div(0.0,-1));
-		out.println(Double.NaN/1);
-		out.println(div(Double.NaN,1));
 		*/
-		/*0.99999999612078
-		out.println(0.0*0.0);
-		out.println(mult(0.0,0.0));
-		out.println(0.0*-0.0);
-		out.println(mult(0.0,-0.0));
-		out.println(0.0*Double.POSITIVE_INFINITY);
-		out.println(mult(0.0,Double.POSITIVE_INFINITY));
-		out.println(0.0*Double.NEGATIVE_INFINITY);
-		out.println(mult(0.0,Double.NEGATIVE_INFINITY));
-		out.println(2*1);
-		out.println(mult(2,1));
-		out.println(2*-1);
-		out.println(mult(2,-1));
-		out.println(-2*1);
-		out.println(mult(-2,1));
-		out.println(-2*-1);
-		out.println(mult(-2,-1));
-		out.println(Double.POSITIVE_INFINITY*-5);
-		out.println(mult(Double.POSITIVE_INFINITY,-5));
-		out.println(Double.POSITIVE_INFINITY*5);
-		out.println(mult(Double.POSITIVE_INFINITY,5));
-		out.println(Double.NEGATIVE_INFINITY*-5);
-		out.println(mult(Double.NEGATIVE_INFINITY,-5));
-		out.println(Double.NEGATIVE_INFINITY*5);
-		out.println(mult(Double.NEGATIVE_INFINITY,5));
-		out.println(0.0*-1);
-		out.println(mult(0.0,-1));
-		out.println(mult(Double.NaN,1));
-		out.println(Double.POSITIVE_INFINITY*-0.0);
-		out.println(mult(Double.POSITIVE_INFINITY,-0.0));
+		/*
+		double factor1 = 1.0E308, factor2;
+		int counter = 0;
+		for (int i = 0; i < 650; i++) {
+			factor1 = factor1 / 10; out.println(factor1 + " dividend factor");
+			out.println("");
+			factor2 = 1.0E308;
+			for (int j = 0; j < 6500; j++) {
+				if (j % 10 == 0) factor2 = factor2 / 10;
+				double dividend = Math.random()*factor2, divisor = Math.random()*factor1;
+				if (j % 2 == 0) dividend = -dividend;
+				if (j % 3 == 0) divisor = -divisor;
+				double result1 = division(dividend, divisor), result2 = dividend / divisor;
+				if (result1 != result2 && (!Double.isNaN(result1) && !Double.isNaN(result1)) &&
+					(abs(result2) > 1.0E-307 || abs(result2) < 1.0E-311)) {
+					out.println(dividend + "!");
+					out.println(divisor);
+					out.println(result1);
+					out.println(result2);
+					out.println(Long.toBinaryString(Double.doubleToLongBits(result1)));
+					out.println(Double.toHexString(result2));
+					counter++;
+				}
+			}
+		}
+		out.println(counter + " results in full division test have missed accuracy");
+		*/
+		/*
+		double factor1 = 1.0E308;
+		int counter = 0;
+		for (int i = 0; i < 65000; i++) {
+			if (i % 100 == 0) { 
+				factor1 = factor1 / 10; 
+				out.println(factor1 + " number random factor"); 
+			}
+			double num = Math.random()*factor1;
+			double result1 = floor(num), result2 = Math.floor(num);
+			if (result1 != result2 && (!Double.isNaN(result1) && !Double.isNaN(result1))) {
+				out.println(num + "!");
+				out.println(result1);
+				out.println(result2);
+				out.println(Long.toBinaryString(Double.doubleToLongBits(result1)));
+				out.println(Double.toHexString(result2));
+				counter++;
+			}
+		}
 		
+		out.println(counter + " results in floor test have missed accuracy");
+		
+		
+		double factor1 = 1.0E308;
+		int counter = 0;
+		for (int i = 0; i < 65000; i++) {
+			if (i % 100 == 0) { 
+				factor1 = factor1 / 10; 
+				out.println(factor1 + " number random factor"); 
+			}
+			double num = Math.random()*factor1;
+			double result1 = ceil(num), result2 = Math.ceil(num);
+			if (result1 != result2 && (!Double.isNaN(result1) && !Double.isNaN(result1))) {
+				out.println(num + "!");
+				out.println(result1);
+				out.println(result2);
+				out.println(Long.toBinaryString(Double.doubleToLongBits(result1)));
+				out.println(Double.toHexString(result2));
+				counter++;
+			}
+		}
+		
+		out.println(counter + " results in ceil test have missed accuracy");
+		/*
+		factor1 = 2100000000, factor2;
+		int counter = 0;
+		for (int i = 0; i < 10; i++) {
+			factor1 = factor1 / 10; out.println(factor1 + " dividend factor");
+			out.println("");
+			factor2 = 2100000000;
+			for (int j = 0; j < 1000; j++) {
+				if (j % 100 == 0) factor2 = factor2 / 10;
+				double dividend = Math.random()*factor2, divisor = Math.random()*factor1;
+				if ((int) divisor == 0.0) continue;
+				if (j % 2 == 0) dividend = -dividend;
+				if (j % 3 == 0) divisor = -divisor;
+				int idividend = (int) dividend, idivisor = (int) divisor;
+				double result1 = div((double)idividend, (double)idivisor);
+				int result2 = idividend / idivisor;
+				if (result1 != result2 && (!Double.isNaN(result1) && !Double.isNaN(result1))) {
+					out.println(dividend + "!");
+					out.println(divisor);
+					out.println(result1);
+					out.println(result2);
+					out.println(Long.toBinaryString(Double.doubleToLongBits(result1)));
+					out.println(Double.toHexString(result2));
+					counter++;
+				}
+			}
+		}
+		out.println(counter + " results in integer division test have missed accuracy");
+		
+		double factor1 = 2100000000, factor2;
+		int counter = 0;
+		for (int i = 0; i < 10; i++) {
+			factor1 = factor1 / 10; out.println(factor1 + " dividend factor");
+			out.println("");
+			factor2 = 2100000000;
+			for (int j = 0; j < 1000; j++) {
+				if (j % 100 == 0) factor2 = factor2 / 10;
+				double dividend = Math.random()*factor2, divisor = Math.random()*factor1;
+				if ((int) divisor == 0.0) continue;
+				if (j % 2 == 0) dividend = -dividend;
+				if (j % 3 == 0) divisor = -divisor;
+				int idividend = (int) dividend, idivisor = (int) divisor;
+				double result1 = floorDiv((double)idividend, (double)idivisor);
+				int result2 = Math.floorDiv(idividend, idivisor);
+				if (result1 != result2 && (!Double.isNaN(result1) && !Double.isNaN(result1))) {
+					out.println(dividend + "!");
+					out.println(divisor);
+					out.println(result1);
+					out.println(result2);
+					out.println(Long.toBinaryString(Double.doubleToLongBits(result1)));
+					out.println(Double.toHexString(result2));
+					counter++;
+				}
+			}
+		}
+		out.println(counter + " results in integer floor division test have missed accuracy");
+		
+		double factor1 = 2100000000, factor2;
+		int counter = 0;
+		for (int i = 0; i < 10; i++) {
+			factor1 = factor1 / 10; out.println(factor1 + " dividend factor");
+			out.println("");
+			factor2 = 2100000000;
+			for (int j = 0; j < 1000; j++) {
+				if (j % 100 == 0) factor2 = factor2 / 10;
+				double dividend = Math.random()*factor2, divisor = Math.random()*factor1;
+				if ((int) divisor == 0.0) continue;
+				if (j % 2 == 0) dividend = -dividend;
+				if (j % 3 == 0) divisor = -divisor;
+				int idividend = (int) dividend, idivisor = (int) divisor;
+				double result1 = divisionRemainder((double)idividend, (double)idivisor);
+				int result2 = idividend % idivisor;
+				if (result1 != result2 && (!Double.isNaN(result1) && !Double.isNaN(result1))) {
+					out.println(dividend + "!");
+					out.println(divisor);
+					out.println(result1);
+					out.println(result2);
+					out.println(Long.toBinaryString(Double.doubleToLongBits(result1)));
+					out.println(Double.toHexString(result2));
+					counter++;
+				}
+			}
+		}
+		out.println(counter + " results in getting remainder of integer division test have missed accuracy");
+		
+		double factor1 = 2100000000, factor2;
+		int counter = 0;
+		for (int i = 0; i < 10; i++) {
+			factor1 = factor1 / 10; out.println(factor1 + " dividend factor");
+			out.println("");
+			factor2 = 2100000000;
+			for (int j = 0; j < 1000; j++) {
+				if (j % 100 == 0) factor2 = factor2 / 10;
+				double dividend = Math.random()*factor2, divisor = Math.random()*factor1;
+				if ((int) divisor == 0.0) continue;
+				if (j % 2 == 0) dividend = -dividend;
+				if (j % 3 == 0) divisor = -divisor;
+				int idividend = (int) dividend, idivisor = (int) divisor;
+				double result1 = floorMod((double)idividend, (double)idivisor);
+				int result2 = Math.floorMod(idividend, idivisor);
+				if (result1 != result2 && (!Double.isNaN(result1) && !Double.isNaN(result1))) {
+					out.println(dividend + "!");
+					out.println(divisor);
+					out.println(result1);
+					out.println(result2);
+					out.println(Long.toBinaryString(Double.doubleToLongBits(result1)));
+					out.println(Double.toHexString(result2));
+					counter++;
+				}
+			}
+		}
+		out.println(counter + " results in getting floor modulus of integer division test have missed accuracy");
 		*/
 	}
 	
@@ -1066,5 +1389,6 @@ public class MiniMath {
 			a.setSign(number.getNegativeSign());
 			return a.getIEEE754();
 		}
-	}*/
+	}
+	*/
 }

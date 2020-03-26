@@ -56,7 +56,12 @@ public class SlashedDouble implements Cloneable {
 	
 	public SlashedDouble(String raw, int exp, String negativesign, long longraw) {
 		this(raw, exp, negativesign);
-		this.longraw = Long.parseUnsignedLong(this.raw, 2);
+		
+		if (this.raw.isEmpty()) { 
+			this.longraw = 0l;
+			this.exp = 0;
+		} else 
+			this.longraw = Long.parseUnsignedLong(this.raw, 2);
 	}
 	
 	private SlashedDouble(Double number, String negativesign, String raw, Long longraw,
@@ -84,7 +89,7 @@ public class SlashedDouble implements Cloneable {
 	}
 	
 	public static String parseRaw(String raw) {
-		Pattern p = Pattern.compile("(?<=0{0,}+)[01]{0,63}");
+		Pattern p = Pattern.compile("(?<=0{0,}+)[01]{0,64}");
 		Matcher m = p.matcher(raw);
 		m.find();
 
@@ -368,6 +373,13 @@ public class SlashedDouble implements Cloneable {
 	public void setSign(String sign) {
 		if (number != null && negativesign != sign) number = -number;
 		if (sign.equals("") || sign.equals("-")) negativesign = sign;
+	}
+	
+	public void reverseSign() {
+		if (Double.isNaN(number)) return;
+		if (number != null) number = -number;
+		if (negativesign.isEmpty()) negativesign = "-";
+		else negativesign = "";
 	}
 
 	public boolean isOdd() {
