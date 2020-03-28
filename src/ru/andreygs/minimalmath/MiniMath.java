@@ -2,10 +2,47 @@ package ru.andreygs.minimalmath;
 
 import static java.lang.System.*;
 
-import java.util.regex.Pattern;
-import java.util.regex.Matcher;
-
+/**
+ * The {@code MiniMath} class is implementing some of the
+ * <i>{@code java.lang.Math}</i> class methods and also offer analogues
+ * of basic mathematical operations, in some kind of minimalistic manner.
+ * It works with surrogate number holding type - {@ code SlashedDouble}.  
+ * Using of this type derived from the technique in which MiniMath methods
+ * are working.
+ *
+ * <p>There are two options to work with this class.
+ * <ul>
+ *   <li>you can directly apply {@code double} values to all of it public
+ *   methods.<li>
+ *   <li>or, you may wish to try it with {@code SlashedDouble} class,
+ *   which can handle an intermidiate values that have much more wider
+ *   limits that {@code double} type and as a result you can get more
+ *   accurate result in the end if in some operations your value will
+ *   intersect {@code double} limit borders in a few times.</li>
+ *</ul>
+ *
+ * <p>For the values that are in range of {@code double} type the accuracy
+ * of calculating is over 99.999% for 12 digits after decimal point,
+ * in comparison with embedded functions.
+ *
+ * <p>But the main goal of this class is in its implemention. The only
+ * built-in operators that was used are summing, bitwise and conditional.
+ * More of it, the summing method is also exists here - mainly for
+ * working with {@code SlashedDouble} type directly.
+ *
+ * @author Andrey Grabov-Smetankin
+ */
 public class MiniMath {
+	
+	/**
+	 * This class does not presume to use any instantiation 
+	 */
+	private MiniMath() {}
+	
+	/**
+	 * This array is holding the powers of two for instructions in
+	 * {@code intPower()} and {@code intPowerNoLimits()} methods
+	 */
 	private static long[] intPwr = 
 	{
 		1073741824l, 536870912l, 268435456l, 134217728l, 67108864l, 
@@ -14,12 +51,38 @@ public class MiniMath {
 		1024l, 512l, 256l, 128l, 64l, 32l, 16l, 8l, 4l, 2l
 	};
 	
+	/**
+	 * Returns the value of the first argument raised to the power of the
+     * second argument. The information about special cases is the same
+	 * as in {@code java.lang.Math} class method.
+	 *
+	 * @param   number(n)  the base.
+     * @param   power(p)   the exponent.
+     * @return  the value {@code n}<sup>{@code p}</sup>.
+	 */
 	public static Double pow(double number, double power) {	
 		return pow(new SlashedDouble(number), new SlashedDouble(power)).getIEEE754();
 	}
 	
+	/**
+	 * Returns the value of the first argument raised to the power of the
+     * second argument. The information about special cases is the same
+	 * as in {@code java.lang.Math} class method.
+	 *
+	 * <p><b>Important.</b>
+	 * <p>This method works directly with {@code SlashedDouble} type of inputs.
+	 * If the arguments are not holding compilated {@code double} numbers
+	 * them will be computed, so if you do not wish to lose advantages of
+	 * using {@code SlashedDouble} type, you should not use this method.
+	 * Instead you may use separately {@code intPowerNoLimits()} and
+	 * {@code fractPower()} methods.
+	 *
+	 * @param   number(n)  the base.
+     * @param   power(p)   the exponent.
+     * @return  the value {@code n}<sup>{@code p}</sup>.
+	 */
 	public static SlashedDouble pow(SlashedDouble number, SlashedDouble power) {
-		double numbernum = number.getDouble(), powernum = power.getDouble();
+		double numbernum = number.getIEEE754(), powernum = power.getIEEE754();
 		
 		if (power.getFractRaw().length() > 0 && number.isNegative()) 
 			return new SlashedDouble(Double.NaN);
@@ -86,6 +149,11 @@ public class MiniMath {
 		else return finalproduct;
 	}
 	
+	/**
+	 * This is auxiliary method for getting result of {@code pow} for
+	 * the cases when result value is over the {@code double} limits
+	 * and the power is negative.
+	 */
 	private static SlashedDouble getOppositeExtremum(SlashedDouble number) {
 		if (number.getDouble() != null) {
 			if (number.getDouble() == Double.POSITIVE_INFINITY)
@@ -103,9 +171,11 @@ public class MiniMath {
 		}
 	}
 	
+	/**
+	 * Returns the number after raising it to the specified integer number.
+	 */
 	private static SlashedDouble intPower(SlashedDouble number, SlashedDouble power) {
 		long ipwr = abs(power).getIntSD().getIEEE754().longValue();
-		//out.println(power.getIntSD().getBinaryRaw());
 		SlashedDouble result = new SlashedDouble(1.0);
 
 		if (number.getIEEE754() == -1) {
@@ -147,6 +217,18 @@ public class MiniMath {
 		return result;
 	}
 	
+	/**
+	 * Returns whether or not number raised to the giving power will be negative
+	 */
+	private static boolean isNegative(SlashedDouble number, SlashedDouble power) {
+		if (number.isNegative() && power.isOdd()) return true;
+		
+		return false;
+	}
+	
+	/**
+	 * This method checks intermidiate results in {@code intPower()}
+	 */
 	private static SlashedDouble getIntPowerResult(SlashedDouble result, SlashedDouble power) {
 		// this check is for extremum values
 		if (result.getExp() > 1024 || result.getExp() < -1075) {
@@ -160,6 +242,10 @@ public class MiniMath {
 		return result;
 	}
 	
+	/**
+	 * This is accessory method that checks exponent against {@code double}
+	 * limitations in methods that needs it to supply correct result.
+	 */
 	private static SlashedDouble checkExponentExtremum(SlashedDouble number, int max, int min) {
 		// here we only find the abs(extremum) without actual sign
 		// correct sign will be applied in the calling function
@@ -172,18 +258,88 @@ public class MiniMath {
 		}
 	}
 	
-	private static boolean isNegative(SlashedDouble number, SlashedDouble power) {
-		if (number.isNegative() && power.isOdd()) return true;
+	/**
+	 * Returns the number after raising it to the integer part of
+	 * the specified power.
+	 *
+	 * <p>It can be used in a sheaf with {@code fractPower()} and {@code innerMult()}
+	 * methods to produce the same result as with using {@code pow()} method,
+	 * but without limitation of {@code double} type.
+	 *
+	 * <p>For example:
+	 *
+	 * {@code SlashedDouble number = new SlashedDouble(3432543.23423);}
+	 * {@code SlashedDouble power = new SlashedDouble(-33.23423);}
+	 *
+	 * {@code SlashedDouble intpowresult, fractpowresult, multresult, divresult;}
+	 *
+	 * {@code intpowresult = intPowerNoLimits(number, power);}
+	 * {@code fractpowresult = fractPower(number, power);}
+	 * {@code multresult = innerMult(intpowresult, fractpowresult, intpowresult.getNegativeSign());}
+	 * {@code divresult = innerDiv(new SlashedDouble(1.0), multresult, multresult.getNegativeSign(), 0);}
+	 *
+	 * <p>That would be striclty as if you were using 
+	 * {@code MiniMath.pow(3432543.23423, -33.23423)}.
+	 *
+	 * @param   number(n)  the base.
+     * @param   power(p)   integer part of the exponent.
+     * @return  the value {@code n}<sup>{@code p}</sup>.
+	 */
+	public static SlashedDouble intPowerNoLimits(SlashedDouble number, SlashedDouble power) {
+		long ipwr = abs(power).getIntSD().getIEEE754().longValue();
+		SlashedDouble result = new SlashedDouble(1.0);
+
+		if (number.getIEEE754() == -1) {
+			if ((ipwr & 1) == 0) return result;
+			else return new SlashedDouble(-1.0);
+		}
 		
-		return false;
+		for (int i = 0; i < intPwr.length; i++) {
+			if ((ipwr & intPwr[i]) == intPwr[i]) {
+				result = innerMult(number, result, "");
+			}
+			result = innerMult(result, result, "");
+		}
+		
+		if ((ipwr & 1l) == 1l) {
+			result = innerMult(number, result, "");
+		}
+		
+		if (isNegative(number, power)) result.setSign("-");
+		
+		return result;
 	}
-	
+
+	/**
+	 * Return {@code double} value of multiplication inputs
+	 *
+	 * @param number1 first multiplyer
+	 * @param number2 second multiplyer
+	 *
+	 * @return {@code number1*number2}
+	 */
 	public static Double mult(double number1, double number2) {	
 		return mult(new SlashedDouble(number1), new SlashedDouble(number2)).getIEEE754();
 	}
 	
+	/**
+	 * Return {@code SlashedDouble} object that holds value of multiplication 
+	 * values that inputs holds.
+	 *
+	 * <p><b>Important.</b>
+	 * <p>This method works directly with {@code SlashedDouble} type of inputs.
+	 * If the arguments are not holding compilated {@code double} numbers
+	 * them will be computed, so if you do not wish to lose advantages of
+	 * using {@code SlashedDouble} type, you should not use this method.
+	 * Instead you may use {@code innerMult} method.
+	 *
+	 * @param number1 first multiplyer
+	 * @param number2 second multiplyer
+	 *
+	 * @return SlashedDouble that holds in value {@code number1*number2}
+	 */
 	public static SlashedDouble mult(SlashedDouble number1, SlashedDouble number2) {
-		double factor1 = number1.getDouble(), factor2 = number2.getDouble();
+		double factor1 = number1.getIEEE754(), factor2 = number2.getIEEE754();
 		
 		if (Double.isNaN(factor1) || Double.isNaN(factor2))	
 			return new SlashedDouble(Double.NaN);
@@ -227,6 +383,9 @@ public class MiniMath {
 		return result;
 	}
 	
+	/**
+	 * Returns result sign of multiplication or division
+	 */
 	private static String getPairSign(SlashedDouble number1, SlashedDouble number2) {
 		if ((!number1.isNegative() && !number2.isNegative()) || 
 			(number1.isNegative() && number2.isNegative())) return "";
@@ -234,7 +393,26 @@ public class MiniMath {
 		return "-";
 	}
 	
-	private static SlashedDouble innerMult(SlashedDouble number1, SlashedDouble number2, String negativesign) {
+	/**
+	 * Return {@code SlashedDouble} object that holds value of multiplication 
+	 * of values that inputs holds.
+	 *
+	 * @param number1 		first multiplyer
+	 * @param number2 		second multiplyer
+	 * @param negativesign	result sign
+	 *
+	 * @return SlashedDouble that holds in value {@code number1*number2} with the sign that was supplied
+	 */
+	public static SlashedDouble innerMult(SlashedDouble number1, SlashedDouble number2, String negativesign) {
+		
+		// this is a check of getting Double.NaN after intermidiate operations
+		// with pure SlashedDouble. When using one-time instructions that
+		// do not include chains this check is not take any valuable part.
+		if (number1.getDouble() != null && Double.isNaN(number1.getDouble()))
+			return number1;
+		else if (number2.getDouble() != null && Double.isNaN(number2.getDouble()))
+			return number2;
+		
 		long product = 0l, unit;
 		String num2raw;
 		
@@ -291,14 +469,51 @@ public class MiniMath {
 
 		return new SlashedDouble(raw, productexp, negativesign, product);
 	}
-
+	
+	/**
+	 * Auxiliary method to get multiplication result exponent
+	 */
 	private static int getMultExponent(String raw, int exp1, int exp2, String num1raw, String num2raw, int biasproduct) {
 		int fractdigitsnum = num1raw.length() + num2raw.length() + 0xfffffffe;
 
 		return raw.length() + ~fractdigitsnum + exp1 + exp2 + biasproduct;
 	}
+	
+	/**
+	 * Returns the number after raising it to the fractional part of
+	 * the specified power.
+	 *
+	 * <p>It can be used in a sheaf with {@code intPower()} and {@code innerMult()}
+	 * methods to produce the same result as with using {@code pow()} method,
+	 * but without limitation of {@code double} type except those that is
+	 * too do not extract roots from negative numbers.
+	 *
+	 * <p>For example:
+	 *
+	 * {@code SlashedDouble number = new SlashedDouble(3432543.23423);}
+	 * {@code SlashedDouble power = new SlashedDouble(-33.23423);}
+	 *
+	 * {@code SlashedDouble intpowresult, fractpowresult, multresult, divresult;}
+	 *
+	 * {@code intpowresult = intPowerNoLimits(number, power);}
+	 * {@code fractpowresult = fractPower(number, power);}
+	 * {@code multresult = innerMult(intpowresult, fractpowresult, intpowresult.getNegativeSign());}
+	 * {@code divresult = innerDiv(new SlashedDouble(1.0), multresult, multresult.getNegativeSign(), 0);}
+	 *
+	 * <p>That would be striclty as if you were using 
+	 * {@code MiniMath.pow(3432543.23423, -33.23423)}.
+	 *
+	 * @param   number(n)  the base.
+     * @param   power(p)   fractional part of the exponent.
+     * @return  the value {@code n}<sup>{@code p}</sup>.
+	 */
+	public static SlashedDouble fractPower(SlashedDouble number, SlashedDouble power) {
+		if (!number.getNegativeSign().isEmpty()) return new SlashedDouble(Double.NaN);
+		else if (number.getDouble() != null && Double.isNaN(number.getDouble()))
+			return number;
+		else if (power.getDouble() != null && Double.isNaN(power.getDouble()))
+			return power;
 
-	private static SlashedDouble fractPower(SlashedDouble number, SlashedDouble power) {
 		String powerraw = power.getFractRaw();
 		int powerexp = power.getExp();
 		SlashedDouble result = new SlashedDouble(1.0);
@@ -323,6 +538,9 @@ public class MiniMath {
 	
 	// here we use boolean type of returning value instead of SlashedDouble like it was
 	// in getIntPowerResult(), because of optimization of required computations
+	/**
+	 * Auxiliary method to check if number is collapsed to '1'
+	 */
 	private static boolean getFractPowerResult(SlashedDouble number) {
 		if (number.getExp() == 0) {
 			if (number.getBinaryRaw().equals("1")) return true;
@@ -331,7 +549,28 @@ public class MiniMath {
 		return false;
 	}
 	
-	private static SlashedDouble innerRoot(SlashedDouble number) {
+	/**
+	 * Return a square root of input number.
+	 *
+	 * It's named so and not {@code sqrt} for example as similar method
+	 * in {@code Math} class because it works little different
+	 * in part that it do not rounding final result, and for that to
+	 * meet names of other similar methods in current class.
+	 *
+	 * @param number value
+	 * @return the positive square root of {@code number}.
+     * 			If the argument is NaN or less than zero, the result is NaN.
+	 */
+	public static SlashedDouble innerRoot(SlashedDouble number) {
+		
+		// this ia a check of passing Double.NaN or negative values
+		// after intermidiate operations with pure SlashedDouble.
+		// When using one-time instructions that do not include chains
+		// this check is not take any valuable part.
+		if (!number.getNegativeSign().isEmpty() || 
+			(number.getDouble() != null && Double.isNaN(number.getDouble()))) 
+			return new SlashedDouble(Double.NaN);
+		
 		String numraw = number.getBinaryRaw(), residualstr;
 		long minuend = 0l, subtrahend, residual;
 		if (!number.isOddIntDigitsNum()) {
@@ -457,6 +696,9 @@ public class MiniMath {
 		return new SlashedDouble(result, resultexp, "");
 	}
 	
+	/**
+	 * Auxiliary method to get root result exponent
+	 */
 	private static int getRootExponent(int exp) {
 		if (exp == 0xffffffff || exp == 0x00000000) {
 			return exp;
@@ -664,7 +906,15 @@ public class MiniMath {
 	// if (featuresign == 1) - returns result of integer division
 	// if (featuresign == 2) - returns result of integer division toward negative infinity rounding
 	// if (featuresign == 3) - returns remainder of division
-	private static SlashedDouble innerDiv(SlashedDouble dividend, SlashedDouble divisor, String negativesign, int featuresign) {
+	public static SlashedDouble innerDiv(SlashedDouble dividend, SlashedDouble divisor, String negativesign, int featuresign) {
+		if (dividend.getDouble() != null && Double.isNaN(dividend.getDouble()))
+			return dividend;
+		else if (divisor.getDouble() != null && Double.isNaN(divisor.getDouble()))
+			return divisor;
+		else if (dividend.getBinaryRaw().isEmpty() && divisor.getBinaryRaw().isEmpty()) {
+			return new SlashedDouble(Double.NaN);
+		}
+			
 		String dividendraw = dividend.getBinaryRaw();
 		String checksorraw = divisor.getBinaryRaw();
 		long divisorlong;
@@ -815,11 +1065,11 @@ public class MiniMath {
 		return number.getFractSD();
 	}
 	
-	public static Double substract(double minuend, double subtrahend) {
-		return substract(new SlashedDouble(minuend), new SlashedDouble(subtrahend)).getIEEE754();
+	public static Double substraction(double minuend, double subtrahend) {
+		return substraction(new SlashedDouble(minuend), new SlashedDouble(subtrahend)).getIEEE754();
 	}
 	
-	public static SlashedDouble substract(SlashedDouble minuend, SlashedDouble subtrahend) {
+	public static SlashedDouble substraction(SlashedDouble minuend, SlashedDouble subtrahend) {
 		double minuendnum = minuend.getDouble(), subtrahendnum = subtrahend.getDouble();
 		
 		if (Double.isNaN(minuendnum) || Double.isNaN(subtrahendnum))
@@ -847,7 +1097,7 @@ public class MiniMath {
 		return result;
 	}
 	
-	private static SlashedDouble innerSub(SlashedDouble minuend, SlashedDouble subtrahend) {
+	public static SlashedDouble innerSub(SlashedDouble minuend, SlashedDouble subtrahend) {
 		// because we want to hold SlashedDouble format with inner methods, 
 		// we must to keep raw format as it is, and do not evaluate double value
 		// cause it may not exist for this time (if we calling .getDouble(),
@@ -949,7 +1199,7 @@ public class MiniMath {
 		return innerSum(number1, number2);
 	}
 	
-	private static SlashedDouble innerSum(SlashedDouble number1, SlashedDouble number2) {
+	public static SlashedDouble innerSum(SlashedDouble number1, SlashedDouble number2) {
 		if (number1.getBinaryRaw().length() == 0) {
 			if (number2.getBinaryRaw().length() == 0 && number2.isNegative()) {
 				SlashedDouble num2clone = number2.clone();
@@ -1022,118 +1272,23 @@ public class MiniMath {
 	}
 	
 	public static void main(String[] args) {
-		
-		//double result1 = pow(-1.536411651123631E-11, -9.13352388E8), result2 = Math.pow(-1.536411651123631E-11, -9.13352388E8);
-		//double result1 = pow(7.667063751883245E30, 0.9989203174209581), result2 = Math.pow(7.667063751883245E30, 0.9989203174209581);
-		//int num1 = (int)3.990269757488364, num2 = (int)56.22729352873485;
-		///out.println(num1);
-		//out.println(num2);
-		//out.println(Long.toBinaryString(Double.doubleToLongBits(8.130598857682476E184)));
-		//out.println(Long.toBinaryString(Double.doubleToLongBits(-7.180234729036432E188)));
-		SlashedDouble sd = new SlashedDouble(Double.NaN);
-		sd.reverseSign();
-		out.println(sum(-5.616669982090663E72,-5.789118513342766E76));
-		out.println(-5.616669982090663E72 + -5.789118513342766E76);
-		out.println(Long.toBinaryString(Double.doubleToLongBits(-9.333742643622224E-302)));
-		//out.println(sum(-10,-5));
-		//out.println(Long.toBinaryString(Double.doubleToLongBits(8.130598857682476E184 - -7.180234729036432E188)));
-		//out.println(Math.floorMod(3, 56));
-
-
-		
-		/*
-		double factor1 = 1.0E308, factor2;
-		int counter = 0;
-		for (int i = 0; i < 650; i++) {
-			factor1 = factor1 / 10; out.println(factor1 + " sum factor");
-			out.println("");
-			factor2 = 1.0E308;
-			for (int j = 0; j < 6500; j++) {
-				if (j % 10 == 0) factor2 = factor2 / 10;
-				double number1 = Math.random()*factor2, number2 = Math.random()*factor1;
-				if (j % 2 == 0) number1 = -number1;
-				if (j % 3 == 0) number2 = -number2;
-				double result1 = sum(number1, number2), result2 = number1 + number2;
-				if (result1 != result2 && (!Double.isNaN(result1) && !Double.isNaN(result1))) {
-					if ((Double.toString(result1).length() < 15 || Double.toString(result2).length() < 15 || !Double.toString(result1).substring(0, 15).equals(Double.toString(result2).substring(0, 15)))) {
-						out.println(number1 + "!");
-						out.println(number2);
-						out.println(result1);
-						out.println(result2);
-						out.println(Long.toBinaryString(Double.doubleToLongBits(result1)));
-						out.println(Double.toHexString(result2));
-						counter++;
-					}
-				}
-			}
-		}
-
-		
-		out.println(counter + " results in summing test that have missed accuracy");
-		*/
-		/*
-		double factor1 = 1.0E308, factor2;
-		int counter = 0;
-		for (int i = 0; i < 650; i++) {
-			factor1 = factor1 / 10; out.println(factor1 + " minuend factor");
-			out.println("");
-			factor2 = 1.0E308;
-			for (int j = 0; j < 6500; j++) {
-				if (j % 10 == 0) factor2 = factor2 / 10;
-				double minuend = Math.random()*factor2, subtrahend = Math.random()*factor1;
-				if (j % 2 == 0) minuend = -minuend;
-				if (j % 3 == 0) subtrahend = -subtrahend;
-				double result1 = substract(minuend, subtrahend), result2 = minuend - subtrahend;
-				if (result1 != result2 && (!Double.isNaN(result1) && !Double.isNaN(result1))) {
-					if ((Double.toString(result1).length() < 15 || Double.toString(result2).length() < 15 || !Double.toString(result1).substring(0, 15).equals(Double.toString(result2).substring(0, 15)))) {
-						out.println(minuend + "!");
-						out.println(subtrahend);
-						out.println(result1);
-						out.println(result2);
-						out.println(Long.toBinaryString(Double.doubleToLongBits(result1)));
-						out.println(Double.toHexString(result2));
-						counter++;
-					}
-				}
-			}
-		}
-		
-		out.println(counter + " results in substraction test that have missed accuracy");
-		*/
+		//testSum();
+		//testSubstraction();
+		//testDivision();
+		//testIntegerDivision();
+		//testIntegerFloorDivision();
+		//testRemainderOfDivision();
+		//testFloorModulus();
+		//testCeil();
+		//testFloor();
+		//testPowInteger();
+		testPow();
+	}
 	
-		/*
+	public static void testPow() {
 		double factor1 = 100000000000000000000000000000000000000000.0, factor2;
 		int counter = 0;
-		for (int i = 0; i < 80; i++) {
-			factor1 = factor1 / 10; out.println(factor1 + " power random factor");
-			out.println("");
-			factor2 = 100000000000000000000000000000000000000000.0;
-			for (int j = 0; j < 8000; j++) {
-				if (j % 100 == 0) factor2 = factor2 / 10;
-				double num = Math.random()*factor2, power = Math.floor(Math.random()*factor1);
-				if (j % 2 == 0) num = -num;
-				if (j % 3 == 0) power = -power;
-				double result1 = pow(num, power), result2 = Math.pow(num, power);
-				if (result1 != result2 && (!Double.isNaN(result1) && !Double.isNaN(result1))) {
-					if ((Double.toString(result1).length() < 16 || Double.toString(result2).length() < 16 || !Double.toString(result1).substring(0, 16).equals(Double.toString(result2).substring(0, 16)))) {
-					out.println(num + "!");
-					out.println(power);
-					out.println(result1);
-					out.println(result2);
-					out.println(Long.toBinaryString(Double.doubleToLongBits(result1)));
-					out.println(Double.toHexString(result2));
-					counter++;
-					}
-				}
-			}
-		}
 		
-		out.println(counter + " results in integer number powers test that have missed accuracy");
-
-		
-		factor1 = 100000000000000000000000000000000000000000.0;
-
-		counter = 0;
 		for (int i = 0; i < 80; i++) {
 			factor1 = factor1 / 10; out.println(factor1 + " power random factor");
 			out.println("");
@@ -1151,7 +1306,7 @@ public class MiniMath {
 					out.println(result1);
 					out.println(result2);
 					out.println(Long.toBinaryString(Double.doubleToLongBits(result1)));
-					out.println(Double.toHexString(result2));
+					out.println(Long.toBinaryString(Double.doubleToLongBits(result2)));
 					counter++;
 					}
 				}
@@ -1159,11 +1314,106 @@ public class MiniMath {
 		}
 		
 		out.println(counter + " results in real number powers test that have missed accuracy");
-		*/
-		/*
+	}
+	
+	public static void testPowInteger() {
+		double factor1 = 100000000000000000000000000000000000000000.0, factor2;
+		int counter = 0;
+		
+		for (int i = 0; i < 80; i++) {
+			factor1 = factor1 / 10; out.println(factor1 + " power random factor");
+			out.println("");
+			factor2 = 100000000000000000000000000000000000000000.0;
+			for (int j = 0; j < 8000; j++) {
+				if (j % 100 == 0) factor2 = factor2 / 10;
+				double num = Math.random()*factor2, power = Math.floor(Math.random()*factor1);
+				if (j % 2 == 0) num = -num;
+				if (j % 3 == 0) power = -power;
+				double result1 = pow(num, power), result2 = Math.pow(num, power);
+				if (result1 != result2 && (!Double.isNaN(result1) && !Double.isNaN(result1))) {
+					if ((Double.toString(result1).length() < 16 || Double.toString(result2).length() < 16 || !Double.toString(result1).substring(0, 16).equals(Double.toString(result2).substring(0, 16)))) {
+					out.println(num + "!");
+					out.println(power);
+					out.println(result1);
+					out.println(result2);
+					out.println(Long.toBinaryString(Double.doubleToLongBits(result1)));
+					out.println(Long.toBinaryString(Double.doubleToLongBits(result2)));
+					counter++;
+					}
+				}
+			}
+		}
+		
+		out.println(counter + " results in integer number powers test that have missed accuracy");
+	}
+	
+	public static void testSum() {
 		double factor1 = 1.0E308, factor2;
 		int counter = 0;
-		for (int i = 0; i < 650; i++) {
+		
+		for (int i = 0; i < 632; i++) {
+			factor1 = factor1 / 10; out.println(factor1 + " sum factor");
+			out.println("");
+			factor2 = 1.0E308;
+			for (int j = 0; j < 6500; j++) {
+				if (j % 10 == 0) factor2 = factor2 / 10;
+				double number1 = Math.random()*factor2, number2 = Math.random()*factor1;
+				if (j % 2 == 0) number1 = -number1;
+				if (j % 3 == 0) number2 = -number2;
+				double result1 = sum(number1, number2), result2 = number1 + number2;
+				if (result1 != result2 && (!Double.isNaN(result1) && !Double.isNaN(result1))) {
+					if ((Double.toString(result1).length() < 15 || Double.toString(result2).length() < 15 || !Double.toString(result1).substring(0, 15).equals(Double.toString(result2).substring(0, 15)))) {
+						out.println(number1 + "!");
+						out.println(number2);
+						out.println(result1);
+						out.println(result2);
+						out.println(Long.toBinaryString(Double.doubleToLongBits(result1)));
+						out.println(Long.toBinaryString(Double.doubleToLongBits(result2)));
+						counter++;
+					}
+				}
+			}
+		}
+
+		out.println(counter + " results in summing test that have missed accuracy");
+	}
+	
+	public static void testSubstraction() {
+		double factor1 = 1.0E308, factor2;
+		int counter = 0;
+		
+		for (int i = 0; i < 632; i++) {
+			factor1 = factor1 / 10; out.println(factor1 + " minuend factor");
+			out.println("");
+			factor2 = 1.0E308;
+			for (int j = 0; j < 6500; j++) {
+				if (j % 10 == 0) factor2 = factor2 / 10;
+				double minuend = Math.random()*factor2, subtrahend = Math.random()*factor1;
+				if (j % 2 == 0) minuend = -minuend;
+				if (j % 3 == 0) subtrahend = -subtrahend;
+				double result1 = substraction(minuend, subtrahend), result2 = minuend - subtrahend;
+				if (result1 != result2 && (!Double.isNaN(result1) && !Double.isNaN(result1))) {
+					if ((Double.toString(result1).length() < 15 || Double.toString(result2).length() < 15 || !Double.toString(result1).substring(0, 15).equals(Double.toString(result2).substring(0, 15)))) {
+						out.println(minuend + "!");
+						out.println(subtrahend);
+						out.println(result1);
+						out.println(result2);
+						out.println(Long.toBinaryString(Double.doubleToLongBits(result1)));
+						out.println(Long.toBinaryString(Double.doubleToLongBits(result2)));
+						counter++;
+					}
+				}
+			}
+		}
+		
+		out.println(counter + " results in substraction test that have missed accuracy");
+	}
+	
+	public static void testDivision() {
+		double factor1 = 1.0E308, factor2;
+		int counter = 0;
+		
+		for (int i = 0; i < 632; i++) {
 			factor1 = factor1 / 10; out.println(factor1 + " dividend factor");
 			out.println("");
 			factor2 = 1.0E308;
@@ -1180,59 +1430,19 @@ public class MiniMath {
 					out.println(result1);
 					out.println(result2);
 					out.println(Long.toBinaryString(Double.doubleToLongBits(result1)));
-					out.println(Double.toHexString(result2));
+					out.println(Long.toBinaryString(Double.doubleToLongBits(result2)));
 					counter++;
 				}
 			}
 		}
+		
 		out.println(counter + " results in full division test have missed accuracy");
-		*/
-		/*
-		double factor1 = 1.0E308;
+	}
+	
+	public static void testIntegerDivision() {
+		double factor1 = 2100000000, factor2;
 		int counter = 0;
-		for (int i = 0; i < 65000; i++) {
-			if (i % 100 == 0) { 
-				factor1 = factor1 / 10; 
-				out.println(factor1 + " number random factor"); 
-			}
-			double num = Math.random()*factor1;
-			double result1 = floor(num), result2 = Math.floor(num);
-			if (result1 != result2 && (!Double.isNaN(result1) && !Double.isNaN(result1))) {
-				out.println(num + "!");
-				out.println(result1);
-				out.println(result2);
-				out.println(Long.toBinaryString(Double.doubleToLongBits(result1)));
-				out.println(Double.toHexString(result2));
-				counter++;
-			}
-		}
 		
-		out.println(counter + " results in floor test have missed accuracy");
-		
-		
-		double factor1 = 1.0E308;
-		int counter = 0;
-		for (int i = 0; i < 65000; i++) {
-			if (i % 100 == 0) { 
-				factor1 = factor1 / 10; 
-				out.println(factor1 + " number random factor"); 
-			}
-			double num = Math.random()*factor1;
-			double result1 = ceil(num), result2 = Math.ceil(num);
-			if (result1 != result2 && (!Double.isNaN(result1) && !Double.isNaN(result1))) {
-				out.println(num + "!");
-				out.println(result1);
-				out.println(result2);
-				out.println(Long.toBinaryString(Double.doubleToLongBits(result1)));
-				out.println(Double.toHexString(result2));
-				counter++;
-			}
-		}
-		
-		out.println(counter + " results in ceil test have missed accuracy");
-		/*
-		factor1 = 2100000000, factor2;
-		int counter = 0;
 		for (int i = 0; i < 10; i++) {
 			factor1 = factor1 / 10; out.println(factor1 + " dividend factor");
 			out.println("");
@@ -1252,15 +1462,19 @@ public class MiniMath {
 					out.println(result1);
 					out.println(result2);
 					out.println(Long.toBinaryString(Double.doubleToLongBits(result1)));
-					out.println(Double.toHexString(result2));
+					out.println(Long.toBinaryString(Double.doubleToLongBits(result2)));
 					counter++;
 				}
 			}
 		}
-		out.println(counter + " results in integer division test have missed accuracy");
 		
+		out.println(counter + " results in integer division test have missed accuracy");
+	}
+	
+	public static void testIntegerFloorDivision() {
 		double factor1 = 2100000000, factor2;
 		int counter = 0;
+		
 		for (int i = 0; i < 10; i++) {
 			factor1 = factor1 / 10; out.println(factor1 + " dividend factor");
 			out.println("");
@@ -1280,15 +1494,19 @@ public class MiniMath {
 					out.println(result1);
 					out.println(result2);
 					out.println(Long.toBinaryString(Double.doubleToLongBits(result1)));
-					out.println(Double.toHexString(result2));
+					out.println(Long.toBinaryString(Double.doubleToLongBits(result2)));
 					counter++;
 				}
 			}
 		}
-		out.println(counter + " results in integer floor division test have missed accuracy");
 		
+		out.println(counter + " results in integer floor division test have missed accuracy");
+	}
+	
+	public static void testRemainderOfDivision() {
 		double factor1 = 2100000000, factor2;
 		int counter = 0;
+		
 		for (int i = 0; i < 10; i++) {
 			factor1 = factor1 / 10; out.println(factor1 + " dividend factor");
 			out.println("");
@@ -1308,15 +1526,19 @@ public class MiniMath {
 					out.println(result1);
 					out.println(result2);
 					out.println(Long.toBinaryString(Double.doubleToLongBits(result1)));
-					out.println(Double.toHexString(result2));
+					out.println(Long.toBinaryString(Double.doubleToLongBits(result2)));
 					counter++;
 				}
 			}
 		}
-		out.println(counter + " results in getting remainder of integer division test have missed accuracy");
 		
+		out.println(counter + " results in getting remainder of integer division test have missed accuracy");
+	}
+	
+	public static void testFloorModulus() {
 		double factor1 = 2100000000, factor2;
 		int counter = 0;
+		
 		for (int i = 0; i < 10; i++) {
 			factor1 = factor1 / 10; out.println(factor1 + " dividend factor");
 			out.println("");
@@ -1336,16 +1558,71 @@ public class MiniMath {
 					out.println(result1);
 					out.println(result2);
 					out.println(Long.toBinaryString(Double.doubleToLongBits(result1)));
-					out.println(Double.toHexString(result2));
+					out.println(Long.toBinaryString(Double.doubleToLongBits(result2)));
 					counter++;
 				}
 			}
 		}
+		
 		out.println(counter + " results in getting floor modulus of integer division test have missed accuracy");
-		*/
 	}
 	
+	public static void testFloor() {
+		double factor1 = 1.0E308;
+		int counter = 0;
+		
+		for (int i = 0; i < 63200; i++) {
+			if (i % 100 == 0) { 
+				factor1 = factor1 / 10; 
+				out.println(factor1 + " number random factor"); 
+			}
+			double num = Math.random()*factor1;
+			double result1 = floor(num), result2 = Math.floor(num);
+			if (result1 != result2 && (!Double.isNaN(result1) && !Double.isNaN(result1))) {
+				out.println(num + "!");
+				out.println(result1);
+				out.println(result2);
+				out.println(Long.toBinaryString(Double.doubleToLongBits(result1)));
+				out.println(Long.toBinaryString(Double.doubleToLongBits(result2)));
+				counter++;
+			}
+		}
+		
+		out.println(counter + " results in floor test have missed accuracy");
+	}
+	
+	public static void testCeil() {
+		double factor1 = 1.0E308;
+		int counter = 0;
+		
+		for (int i = 0; i < 63200; i++) {
+			if (i % 100 == 0) { 
+				factor1 = factor1 / 10; 
+				out.println(factor1 + " number random factor"); 
+			}
+			double num = Math.random()*factor1;
+			double result1 = ceil(num), result2 = Math.ceil(num);
+			if (result1 != result2 && (!Double.isNaN(result1) && !Double.isNaN(result1))) {
+				out.println(num + "!");
+				out.println(result1);
+				out.println(result2);
+				out.println(Long.toBinaryString(Double.doubleToLongBits(result1)));
+				out.println(Long.toBinaryString(Double.doubleToLongBits(result2)));
+				counter++;
+			}
+		}
+		
+		out.println(counter + " results in ceil test have missed accuracy");
+	}
+		
+		
 	/*
+	// In spite of that it do a rounding like it assumed in the standart
+	// due to only 64 bits availible it returns a rounding that is less
+	// accurate that a simple one that presents in SlashedDouble
+	// service method getRoundedRawBin(). It is not deleted for now
+	// because of possibility to adding additional accuracy in the
+	// future (if there be extra number that would be holding some extra bits).
 	private static double roundResult(SlashedDouble number) throws NullPointerException {
 		String raw = number.getBinaryRaw();
 		if (raw == null || raw.length() < 54) return number.getIEEE754();

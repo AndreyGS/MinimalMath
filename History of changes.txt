@@ -1,11 +1,18 @@
 Hisory of changes
 
+28.03.2020
+1. Added MiniMath.intPowerNoLimits() method to permit handle double overflowing numbers.
+2. MiniMath.substaract() was renamed to MiniMath.substraction() to comply with style of other names.
+3. Adding java documentation to MiniMath source is in the progress.
+4. Added individual test methods to MiniMath.
+
+
 26.03.2020
-1. .substract() and innerSub() methods are ready to use;
+1. MiniMath.substract() and MiniMath.innerSub() methods are ready to use;
 2. Corrected misprint in regexp pattern in SlashedDouble .parseRaw();
-3. Added .reverseSign() method to SlashedDouble.
-4. .floorMod() method is ready.
-5. .sum() method is ready.
+3. Added MiniMath.reverseSign() method to SlashedDouble.
+4. MiniMath.floorMod() method is ready.
+5. MiniMath.sum() method is ready.
 6. All functions were tested on large range of values many times, and after debugging all works correctly.
 
 25.03.2020

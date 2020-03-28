@@ -8,7 +8,7 @@ For now we have 2 classes, one is *ru.andreygs.minimalmath.MiniMath* - this is t
 
 ## Current stage
 
-There are several working methods already done. One of which is MiniMath.pow() method, that can handle any valid double values as input number and power to produce fully-correct result according to IEEE754 standart (test will give more than 99.9999% among all incoming *double* values are strictly equal to those that are receiving from *java.lang.Math.pow()* (for 12 decimal digits after decimal point and about 99.995% for 13 digits)). Also MiniMath.division(), which also takes a part in MiniMath.pow() when negative power is aplied, for alone demonstrate 100% accuracy on any input of double values except these that result to numbers between +-(10^-307 - 10^-311): there present some little accuracy missing. The main list of working methods is introduced in 'How to use' section.
+There are several working methods already done. One of which is MiniMath.pow() method, that can handle any valid double values as input number and power to produce fully-correct result according to IEEE754 standart (test will give more than 99.9999% among all incoming *double* values are strictly equal to those that are receiving from *java.lang.Math.pow()* (for 12 decimal digits after decimal point and about 99.995% for 13 digits)). Also MiniMath.division(), which also takes a part in MiniMath.pow() when negative power is aplied, for alone it demonstrate 100% accuracy on any input of double values except these that result to numbers between +-(10^-307 - 10^-311): there present some little accuracy missing. The main list of working methods is introduced in 'How to use' section.
 
 ## So, for what?
 
@@ -28,7 +28,7 @@ There is a several working methods that may get an interest of some kind in Mini
 - *static SlashedDouble fraction(SlashedDouble number)* - returns SlashedDouble that holds fractional part of number that argument holds, that is closest to zero;
 - *static Double sum(double number1, double number2)* - summing as it is;
 - *static SlashedDouble sum(SlashedDouble number1, SlashedDouble number2)* - summing as it is;
-- *static Double substract(double minuend, double subtrahend)* - substraction;
+- *static Double substraction(double minuend, double subtrahend)* - substraction;
 - *static SlashedDouble substract(SlashedDouble minuend, SlashedDouble subtrahend)* - substraction;
 - *static Double mult(double number1, double number2)* - makes a multiplication;
 - *static SlashedDouble mult(SlashedDouble number1, SlashedDouble number2)* - makes a multiplication;
@@ -47,7 +47,18 @@ There is a several working methods that may get an interest of some kind in Mini
 
 You are also may try to use some functionality of SlashedDouble objects - this have many public methods, but no documentation for them is included for now. All I can say, this class is made for slicing standart double value, than separately operating with its parts - an exponent, mantissa and sign - and finally put them all together in double again.
 
-If you want to test MiniMath.pow() - there, in MiniMath.main(), is you can find 2 two level test cycles (yes, 2 cycles with two levels) of *MiniMath.pow()* function according to *java.lang.Math.pow()*, where random numbers and powers in staged manner applying to both of them (amplitudes of numbers and according powers are from 10^40 till 10^-39) and if result is not the same prints it out to the screen. Also there are tests for all main funcitons and if you wish to try them - you need to uncomment it. For now it is a bit of a mess in MiniMath.main(). Probably a little bit later I'll move all these test in a separate junit class.
+Also if you want to test accuracy of current functions there are several (11 for now) test methods.
+- *static void testSum();*
+- *static void testSubstraction();*
+- *static void testDivision();*
+- *static void testIntegerDivision();*
+- *static void testIntegerFloorDivision();*
+- *static void testRemainderOfDivision();*
+- *static void testFloorModulus();*
+- *static void testCeil();*
+- *static void testFloor();*
+- *static void testPowInteger();*
+- *static void testPow();*
 
 ## License
 

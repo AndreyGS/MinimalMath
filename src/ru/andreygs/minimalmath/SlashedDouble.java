@@ -39,17 +39,19 @@ public class SlashedDouble implements Cloneable {
 	public SlashedDouble(long longraw, int exp, String negativesign) {
 		this.raw = cutFractTail(Long.toBinaryString(longraw));
 		this.exp = exp;
-		this.negativesign = negativesign;
+		if (negativesign.isEmpty()) this.negativesign = "";
+		else this.negativesign = "-";
 		
 		checkRaw();
 		
 		this.longraw = Long.parseUnsignedLong(this.raw, 2);
 	}
 	
-	public SlashedDouble(String raw, int exp, String negativesign) throws NumberFormatException {
+	public SlashedDouble(String raw, int exp, String negativesign) {
 		this.raw = cutFractTail(parseRaw(raw));
 		this.exp = exp;
-		this.negativesign = negativesign;
+		if (negativesign.isEmpty()) this.negativesign = "";
+		else this.negativesign = "-";
 		
 		checkRaw();
 	}
@@ -217,7 +219,7 @@ public class SlashedDouble implements Cloneable {
 		return raw;
 	}
 	
-	public String getroundedrawhex() {
+	public String getRoundedRawHex() {
 		if (roundedrawhex == null) {
 			roundedrawhex = fromBinaryToHex(roundedrawbin);
 		}
@@ -225,10 +227,10 @@ public class SlashedDouble implements Cloneable {
 		return roundedrawhex;
 	}
 		
-	private String getroundedrawbin() {
+	private String getRoundedRawBin() {
 		if (roundedrawbin == null) {
 			
-			// these instructions supply additional accuracy
+			// These instructions supply additional accuracy
 			// in spite of that we already have scaled rounding in MiniMath,
 			// current final rounding highly increase precision of result,
 			// total amount of missed values with accuracy of 13-14 digits after decimal point 
@@ -257,13 +259,13 @@ public class SlashedDouble implements Cloneable {
 	public String getDoubleHexRaw() {
 		if (ieee754hex == null) {
 			
-			getroundedrawbin();
+			getRoundedRawBin();
 			
 			if ((raw.indexOf('1') == 0xffffffff) && (exp == 0 || exp  < 0xfffffbce)) {
 				// if it's '0' or below minimum
 				ieee754hex = negativesign + "0x0.0p0";
 			} else {	
-				ieee754hex = negativesign + "0x1." + getroundedrawhex() + "p" + exp;
+				ieee754hex = negativesign + "0x1." + getRoundedRawHex() + "p" + exp;
 			}
 		}
 		
@@ -405,7 +407,7 @@ public class SlashedDouble implements Cloneable {
 					ieee754bin += "11111111111" + "0000000000000000000000000000000000000000000000000000"; // +-Infinity
 				}
 				
-				getroundedrawbin();
+				getRoundedRawBin();
 				
 				String extroundedrawbin;
 				
