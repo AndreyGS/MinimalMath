@@ -1,5 +1,12 @@
 Hisory of changes
 
+29.03.2020
+1. SlashedDouble class was renamed to SlicedDouble.
+2. Added full Java documentation to all methods in MiniMath class.
+3. Added small part of Java documentation in SlicedDouble class.
+4. Removed one of the constructors in SlicedDouble class.
+5. Minor edits to both classes was applied.
+
 28.03.2020
 1. Added MiniMath.intPowerNoLimits() method to permit handle double overflowing numbers.
 2. MiniMath.substaract() was renamed to MiniMath.substraction() to comply with style of other names.

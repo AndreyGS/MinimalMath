@@ -3,70 +3,175 @@ package ru.andreygs.minimalmath;
 import java.util.regex.Pattern;
 import java.util.regex.Matcher;
 
-public class SlashedDouble implements Cloneable {
+/**
+ * The {@code SlicedDouble} class is an auxiliary type, that helps with
+ * calculations in {@code MiniMath} class.
+ *
+ * <p>Its species are exists in two main states:
+ *
+ * <p>1. When the {@code double} value compilated - after evaluation 
+ * of {@code getIEEE754()}method. As you can see that state is using to get 
+ * an inputs and outputs when {@code double} value is expected.
+ * 
+ * <p>2. When there is no rounding of mantissa perfoming by evaluation of
+ * {@code getIEEE754()} method and its submethods. That state is using to
+ * manipulate the raw values without some of limitations of pure {@code double} format.
+ * 
+ * <p>It include a few different constructors that are using depend on
+ * what input you may or can to proceed.
+ *
+ * <p>Beacuse of its surrogate nature the number in {@code SlicedDouble} type
+ * is exists in sliced form. There is separate mantissa as {@code String}, 
+ * an exponent as {@code Integer} and negativesign as {@code String}. These are
+ * the base of number that holds in. All other fractions can be comupted with availible
+ * instance methods.
+ *
+ * @author Andrey Grabov-Smetankin
+ */
+public class SlicedDouble implements Cloneable {
+	
+	/**
+	 * That variable obtain a value by two different ways.
+	 * 
+	 * <p>First: as an input of respective constructor;
+	 * <p>Second: after evaluation of {@code .getIEEE754()} method
+	 */
 	private Double number;
 	
+	/**
+	 * Holds the negative sign: "-" if number is negative and "" if not
+	 */
 	private String negativesign;
 	
+	/**
+	 * Mantissa of number without leading and trailing zeros.
+	 * It can be empty in case if number is 0.0, or -0.0
+	 * or Double.POSITIVE_INFINITY, or Double.NEGATIVE_INFINITY
+	 * or Double.NaN;
+	 */
 	private String raw;
+	
+	/**
+	 * The {@code long} value that obtains by {@code .parseUnsignedLong()}
+	 * of raw {@code String}.
+	 */
 	private Long longraw;
 	
+	/**
+	 * The raw of integer part of number
+	 */
 	private String intraw;
+	
+	/**
+	 * The raw of fractional part of number
+	 */
 	private String fractraw;
 	
+	/**
+	 * The exponent of number
+	 */
 	private Integer exp;
 	
+	/**
+	 * That variable holds number of '1' in the raw
+	 */
 	private Integer onesnum;
 	
+	/**
+	 * It's a rounded raw that apply when {@code double} format need to
+	 * be obtained.
+	 */
 	private String roundedrawbin;
+	
+	/**
+	 * The hexadecimal sview of rounded raw
+	 */
 	private String roundedrawhex;
 	
+	/**
+	 * The binary form of view of full {@code double} number 
+	 */
 	private String ieee754bin;
+	
+	/**
+	 * The hexadecimal form of view of full {@code double} number 
+	 */
 	private String ieee754hex;
 	
-	public SlashedDouble(double number) {
+	/**
+	 * This constructor is using, when {@code double} number is supplied.
+	 *
+	 * <p>The giving number will be sliced to the mantissa, exponent and negativesign
+	 *
+	 * <p>The exceptions are {@code Double.POSITIVE_INFINITY} and
+	 * {@code Double.NEGATIVE_INFINITY} - there will be no mantissa and exponent. And
+	 * {@code Double.NaN} - there negativesign will also be null.
+	 *
+	 * @param number the {@code double} number
+	 */
+	public SlicedDouble(double number) {
 		this.number = number;
 		
 		if (number != Double.POSITIVE_INFINITY &&  number != Double.NEGATIVE_INFINITY  &&
 			!Double.isNaN(number)) {
-			slashIt();
+			sliceIt();
 		} else {
 			if (number == Double.POSITIVE_INFINITY) negativesign = "";
 			else if (number == Double.NEGATIVE_INFINITY) negativesign = "-";
 		}
 	}
 	
-	public SlashedDouble(long longraw, int exp, String negativesign) {
+	/**
+	 * Constructs a {@code SlicedDouble} number from its inputs
+	 *
+	 * <p>If empty {@code String} was supplied to negativesign parameter
+	 * negativesign will be empty, and equals "-" in any other case.
+	 *
+	 * @param longraw 		the long number that contains mantissa
+	 * @param exp			the exponent of creating number
+	 * @param negativesign	the negativesign
+	 */
+	public SlicedDouble(long longraw, int exp, String negativesign) {
 		this.raw = cutFractTail(Long.toBinaryString(longraw));
 		this.exp = exp;
-		if (negativesign.isEmpty()) this.negativesign = "";
+		
+		if (negativesign == null || negativesign.isEmpty()) this.negativesign = "";
 		else this.negativesign = "-";
 		
 		checkRaw();
-		
-		this.longraw = Long.parseUnsignedLong(this.raw, 2);
 	}
 	
-	public SlashedDouble(String raw, int exp, String negativesign) {
+	/**
+	 * Constructs a {@code SlicedDouble} number from its inputs
+	 *
+	 * <p>If empty {@code String} was supplied to negativesign parameter
+	 * negativesign will be empty, and equals "-" in any other case.
+	 *
+	 * <p>If the {@code String} that supplied as raw parameter contains
+	 * a binary representation of mantissa maximum length of 64 digits
+	 * apart from leading zeros it will be parsed and added to instance.
+	 * If raw is null or if it not contains the valid binary, than
+	 * empty {@code String} will be added, that is equivalent to '0.0' or '-0.0'
+	 *
+	 * @param raw 			the {@code String} that contains mantissa
+	 * @param exp			the exponent of creating number
+	 * @param negativesign	the negativesign
+	 */
+	public SlicedDouble(String raw, int exp, String negativesign) {
 		this.raw = cutFractTail(parseRaw(raw));
 		this.exp = exp;
-		if (negativesign.isEmpty()) this.negativesign = "";
+		if (this.raw.isEmpty()) this.exp = 0;
+		
+		if (negativesign == null || negativesign.isEmpty()) this.negativesign = "";
 		else this.negativesign = "-";
 		
 		checkRaw();
 	}
 	
-	public SlashedDouble(String raw, int exp, String negativesign, long longraw) {
-		this(raw, exp, negativesign);
-		
-		if (this.raw.isEmpty()) { 
-			this.longraw = 0l;
-			this.exp = 0;
-		} else 
-			this.longraw = Long.parseUnsignedLong(this.raw, 2);
-	}
-	
-	private SlashedDouble(Double number, String negativesign, String raw, Long longraw,
+	/**
+	 * This constructor is using by {@code .clone()} method.
+	 */
+	private SlicedDouble(Double number, String negativesign, String raw, Long longraw,
 		String intraw, String fractraw, Integer exp, Integer onesnum, String roundedrawbin,
 		String roundedrawhex, String ieee754bin, String ieee754hex)	{
 		if (number != null) this.number = Double.valueOf(number);
@@ -91,6 +196,8 @@ public class SlashedDouble implements Cloneable {
 	}
 	
 	public static String parseRaw(String raw) {
+		if (raw.equals(null)) return "";
+		
 		Pattern p = Pattern.compile("(?<=0{0,}+)[01]{0,64}");
 		Matcher m = p.matcher(raw);
 		m.find();
@@ -102,7 +209,7 @@ public class SlashedDouble implements Cloneable {
 		return parseRaw(raw.substring(start, end));
 	}
 	
-	private void slashIt() {
+	private void sliceIt() {
 		String[] stripes = Double.toHexString(number).split("[.p]");
 		
 		if (stripes[0].charAt(0) == '-') negativesign = "-";
@@ -205,7 +312,8 @@ public class SlashedDouble implements Cloneable {
 	
 	public Long getLongRaw() {
 		if (longraw == null) {
-			longraw = Long.parseUnsignedLong(raw, 2);
+			if (raw.isEmpty()) longraw = 0l;
+			else longraw = Long.parseUnsignedLong(raw, 2);
 		}
 		
 		return longraw;
@@ -314,15 +422,15 @@ public class SlashedDouble implements Cloneable {
 		return intraw;
 	}
 	
-	public SlashedDouble getIntSD() {
+	public SlicedDouble getIntSD() {
 		if (intraw == null) getIntRaw();
 		
 		if (exp == null) {
 			return this;
 		} else if (exp > 0xffffffff) {
-			return new SlashedDouble(intraw, exp, negativesign);
+			return new SlicedDouble(intraw, exp, negativesign);
 		} else {
-			return new SlashedDouble("", 0, negativesign);
+			return new SlicedDouble("", 0, negativesign);
 		}
 	}
 	
@@ -342,18 +450,18 @@ public class SlashedDouble implements Cloneable {
 		return fractraw;
 	}
 	
-	public SlashedDouble getFractSD() {
+	public SlicedDouble getFractSD() {
 		if (fractraw == null) getFractRaw();
 		
 		if (exp == null) {
 			if (Double.isNaN(number)) return this;
-			else if (number == Double.NEGATIVE_INFINITY) return new SlashedDouble("", 0, "-");
-			else return new SlashedDouble("", 0, "");
+			else if (number == Double.NEGATIVE_INFINITY) return new SlicedDouble("", 0, "-");
+			else return new SlicedDouble("", 0, "");
 		} else {
-			if (fractraw.isEmpty()) return new SlashedDouble("", 0, negativesign);
+			if (fractraw.isEmpty()) return new SlicedDouble("", 0, negativesign);
 			else {
-				if (exp < 0) return new SlashedDouble(fractraw, exp, negativesign);
-				else return new SlashedDouble(fractraw, ~fractraw.indexOf('1'), negativesign);
+				if (exp < 0) return new SlicedDouble(fractraw, exp, negativesign);
+				else return new SlicedDouble(fractraw, ~fractraw.indexOf('1'), negativesign);
 			}
 		}
 	}
@@ -447,8 +555,8 @@ public class SlashedDouble implements Cloneable {
 		return ieee754bin;	
 	}
 	
-	public SlashedDouble clone() {
-		SlashedDouble sdnum = new SlashedDouble(this.number, this.negativesign, this.raw, 
+	public SlicedDouble clone() {
+		SlicedDouble sdnum = new SlicedDouble(this.number, this.negativesign, this.raw, 
 			this.longraw, this.intraw, this.fractraw, this.exp, this.onesnum, 
 			this.roundedrawbin, this.roundedrawhex, this.ieee754bin, this.ieee754hex);
 		

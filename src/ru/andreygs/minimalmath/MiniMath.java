@@ -6,15 +6,15 @@ import static java.lang.System.*;
  * The {@code MiniMath} class is implementing some of the
  * <i>{@code java.lang.Math}</i> class methods and also offer analogues
  * of basic mathematical operations, in some kind of minimalistic manner.
- * It works with surrogate number holding type - {@ code SlashedDouble}.  
+ * It works with surrogate number holding type - {@code SlicedDouble}.  
  * Using of this type derived from the technique in which MiniMath methods
  * are working.
  *
  * <p>There are two options to work with this class.
  * <ul>
  *   <li>you can directly apply {@code double} values to all of it public
- *   methods.<li>
- *   <li>or, you may wish to try it with {@code SlashedDouble} class,
+ *   methods.</li>
+ *   <li>or, you may wish to try it with {@code SlicedDouble} class,
  *   which can handle an intermidiate values that have much more wider
  *   limits that {@code double} type and as a result you can get more
  *   accurate result in the end if in some operations your value will
@@ -28,7 +28,7 @@ import static java.lang.System.*;
  * <p>But the main goal of this class is in its implemention. The only
  * built-in operators that was used are summing, bitwise and conditional.
  * More of it, the summing method is also exists here - mainly for
- * working with {@code SlashedDouble} type directly.
+ * working with {@code SlicedDouble} type directly.
  *
  * @author Andrey Grabov-Smetankin
  */
@@ -61,7 +61,7 @@ public class MiniMath {
      * @return  the value {@code n}<sup>{@code p}</sup>.
 	 */
 	public static Double pow(double number, double power) {	
-		return pow(new SlashedDouble(number), new SlashedDouble(power)).getIEEE754();
+		return pow(new SlicedDouble(number), new SlicedDouble(power)).getIEEE754();
 	}
 	
 	/**
@@ -70,10 +70,10 @@ public class MiniMath {
 	 * as in {@code java.lang.Math} class method.
 	 *
 	 * <p><b>Important.</b>
-	 * <p>This method works directly with {@code SlashedDouble} type of inputs.
+	 * <p>This method works directly with {@code SlicedDouble} type of inputs.
 	 * If the arguments are not holding compilated {@code double} numbers
 	 * them will be computed, so if you do not wish to lose advantages of
-	 * using {@code SlashedDouble} type, you should not use this method.
+	 * using {@code SlicedDouble} type, you should not use this method.
 	 * Instead you may use separately {@code intPowerNoLimits()} and
 	 * {@code fractPower()} methods.
 	 *
@@ -81,39 +81,39 @@ public class MiniMath {
      * @param   power(p)   the exponent.
      * @return  the value {@code n}<sup>{@code p}</sup>.
 	 */
-	public static SlashedDouble pow(SlashedDouble number, SlashedDouble power) {
+	public static SlicedDouble pow(SlicedDouble number, SlicedDouble power) {
 		double numbernum = number.getIEEE754(), powernum = power.getIEEE754();
 		
 		if (power.getFractRaw().length() > 0 && number.isNegative()) 
-			return new SlashedDouble(Double.NaN);
+			return new SlicedDouble(Double.NaN);
 		
 		if (Double.isNaN(powernum) || Double.isNaN(numbernum))
-			return new SlashedDouble(Double.NaN);
+			return new SlicedDouble(Double.NaN);
 		else if (numbernum == 1) return number;
-		else if (powernum == 0.0) return new SlashedDouble(1.0);
+		else if (powernum == 0.0) return new SlicedDouble(1.0);
 		else if (powernum == 1.0) return number;
-		else if (numbernum == 0.0 && !number.isNegative()) return new SlashedDouble(0.0);
-		else if (numbernum == -0.0) return new SlashedDouble(-0.0);
+		else if (numbernum == 0.0 && !number.isNegative()) return new SlicedDouble(0.0);
+		else if (numbernum == -0.0) return new SlicedDouble(-0.0);
 		else if (numbernum == Double.POSITIVE_INFINITY || powernum == Double.POSITIVE_INFINITY) {
-			return new SlashedDouble(Double.POSITIVE_INFINITY);
+			return new SlicedDouble(Double.POSITIVE_INFINITY);
 		} else if (numbernum == Double.NEGATIVE_INFINITY) {
-			if (!power.isOdd()) return new SlashedDouble(Double.POSITIVE_INFINITY);
-			else return new SlashedDouble(Double.NEGATIVE_INFINITY);
+			if (!power.isOdd()) return new SlicedDouble(Double.POSITIVE_INFINITY);
+			else return new SlicedDouble(Double.NEGATIVE_INFINITY);
 		}
 		
-		SlashedDouble ipwr;
+		SlicedDouble ipwr;
 		
 		if (power.getExp() > 0xffffffff) {
 			if (power.getExp() > 30) {
 				if ((power.isNegative() && number.getExp() < 0) ||
 					!power.isNegative() && number.getExp() >= 0) {
 					if (power.isOdd() && number.isNegative()) 
-						return new SlashedDouble(Double.NEGATIVE_INFINITY);
-					else return new SlashedDouble(Double.POSITIVE_INFINITY);
+						return new SlicedDouble(Double.NEGATIVE_INFINITY);
+					else return new SlicedDouble(Double.POSITIVE_INFINITY);
 				} else {
 					if (power.isOdd() && number.isNegative())
-						return new SlashedDouble(-0.0);
-					return new SlashedDouble(0.0);
+						return new SlicedDouble(-0.0);
+					return new SlicedDouble(0.0);
 				}
 			}
 			
@@ -124,15 +124,15 @@ public class MiniMath {
 				else return ipwr;
 			}
 		} else {
-			ipwr = new SlashedDouble(1.0);
+			ipwr = new SlicedDouble(1.0);
 		}
 
-		SlashedDouble fpwr;
+		SlicedDouble fpwr;
 		
 		if (power.getFractRaw().length() > 0) {
 			fpwr = fractPower(number, power);
 		} else {
-			fpwr = new SlashedDouble(1.0);
+			fpwr = new SlicedDouble(1.0);
 		}
 		
 		if (fpwr.getDouble() != null && fpwr.getDouble() != 1.0) {
@@ -140,11 +140,11 @@ public class MiniMath {
 			else return fpwr;
 		}
 		
-		SlashedDouble finalproduct = innerMult(ipwr, fpwr, ipwr.getNegativeSign());
+		SlicedDouble finalproduct = innerMult(ipwr, fpwr, ipwr.getNegativeSign());
 		
 		if (power.isNegative()) {
 			
-			return innerDiv(new SlashedDouble(1.0), finalproduct, ipwr.getNegativeSign(), 0);
+			return innerDiv(new SlicedDouble(1.0), finalproduct, ipwr.getNegativeSign(), 0);
 		}
 		else return finalproduct;
 	}
@@ -154,33 +154,33 @@ public class MiniMath {
 	 * the cases when result value is over the {@code double} limits
 	 * and the power is negative.
 	 */
-	private static SlashedDouble getOppositeExtremum(SlashedDouble number) {
+	private static SlicedDouble getOppositeExtremum(SlicedDouble number) {
 		if (number.getDouble() != null) {
 			if (number.getDouble() == Double.POSITIVE_INFINITY)
-				return new SlashedDouble(0.0);
+				return new SlicedDouble(0.0);
 			else if (number.getDouble() == Double.NEGATIVE_INFINITY)
-				return new SlashedDouble(-0.0);
+				return new SlicedDouble(-0.0);
 			else if (number.getDouble() == 0 && !number.isNegative())
-				return new SlashedDouble(Double.POSITIVE_INFINITY);
+				return new SlicedDouble(Double.POSITIVE_INFINITY);
 			else if (number.getDouble() == 0 && number.isNegative())
-				return new SlashedDouble(Double.NEGATIVE_INFINITY);
+				return new SlicedDouble(Double.NEGATIVE_INFINITY);
 			else
-				return new SlashedDouble(Double.NaN);
+				return new SlicedDouble(Double.NaN);
 		} else {
-			return new SlashedDouble(Double.NaN);
+			return new SlicedDouble(Double.NaN);
 		}
 	}
 	
 	/**
 	 * Returns the number after raising it to the specified integer number.
 	 */
-	private static SlashedDouble intPower(SlashedDouble number, SlashedDouble power) {
+	private static SlicedDouble intPower(SlicedDouble number, SlicedDouble power) {
 		long ipwr = abs(power).getIntSD().getIEEE754().longValue();
-		SlashedDouble result = new SlashedDouble(1.0);
+		SlicedDouble result = new SlicedDouble(1.0);
 
 		if (number.getIEEE754() == -1) {
 			if ((ipwr & 1) == 0) return result;
-			else return new SlashedDouble(-1.0);
+			else return new SlicedDouble(-1.0);
 		}
 		
 		for (int i = 0; i < intPwr.length; i++) {
@@ -220,7 +220,7 @@ public class MiniMath {
 	/**
 	 * Returns whether or not number raised to the giving power will be negative
 	 */
-	private static boolean isNegative(SlashedDouble number, SlashedDouble power) {
+	private static boolean isNegative(SlicedDouble number, SlicedDouble power) {
 		if (number.isNegative() && power.isOdd()) return true;
 		
 		return false;
@@ -229,7 +229,7 @@ public class MiniMath {
 	/**
 	 * This method checks intermidiate results in {@code intPower()}
 	 */
-	private static SlashedDouble getIntPowerResult(SlashedDouble result, SlashedDouble power) {
+	private static SlicedDouble getIntPowerResult(SlicedDouble result, SlicedDouble power) {
 		// this check is for extremum values
 		if (result.getExp() > 1024 || result.getExp() < -1075) {
 			// if power is negative there can be an exponent
@@ -246,13 +246,13 @@ public class MiniMath {
 	 * This is accessory method that checks exponent against {@code double}
 	 * limitations in methods that needs it to supply correct result.
 	 */
-	private static SlashedDouble checkExponentExtremum(SlashedDouble number, int max, int min) {
+	private static SlicedDouble checkExponentExtremum(SlicedDouble number, int max, int min) {
 		// here we only find the abs(extremum) without actual sign
 		// correct sign will be applied in the calling function
 		if (number.getExp() > max) {
-			return new SlashedDouble(Double.POSITIVE_INFINITY);
+			return new SlicedDouble(Double.POSITIVE_INFINITY);
 		} else if (number.getExp() < min) {
-			return new SlashedDouble(0.0);
+			return new SlicedDouble(0.0);
 		} else {
 			return number;
 		}
@@ -264,34 +264,38 @@ public class MiniMath {
 	 *
 	 * <p>It can be used in a sheaf with {@code fractPower()} and {@code innerMult()}
 	 * methods to produce the same result as with using {@code pow()} method,
-	 * but without limitation of {@code double} type.
+	 * but without limitation of {@code double} type. The only limit that can happen
+	 * is an overflow of {@code integer} that holds an exponent if your
+	 * value will be too small or too large. But you can simply handle it by
+	 * checking inputs and outputs if such scenario may take a place.
 	 *
-	 * <p>For example:
+	 * <p>For example:<br>
 	 *
-	 * {@code SlashedDouble number = new SlashedDouble(3432543.23423);}
-	 * {@code SlashedDouble power = new SlashedDouble(-33.23423);}
+	 * {@code SlicedDouble number = new SlicedDouble(3432543.23423);}<br>
+	 * {@code SlicedDouble power = new SlicedDouble(-33.23423);}<br><br>
 	 *
-	 * {@code SlashedDouble intpowresult, fractpowresult, multresult, divresult;}
+	 * {@code SlicedDouble intpowresult, fractpowresult, multresult, divresult;}<br><br>
 	 *
-	 * {@code intpowresult = intPowerNoLimits(number, power);}
-	 * {@code fractpowresult = fractPower(number, power);}
-	 * {@code multresult = innerMult(intpowresult, fractpowresult, intpowresult.getNegativeSign());}
-	 * {@code divresult = innerDiv(new SlashedDouble(1.0), multresult, multresult.getNegativeSign(), 0);}
+	 * {@code intpowresult = MiniMath.intPowerNoLimits(number, power);}<br>
+	 * {@code fractpowresult = MiniMath.fractPower(number, power);}<br>
+	 * {@code multresult = MiniMath.innerMult(intpowresult, fractpowresult, intpowresult.getNegativeSign());}<br>
+	 * {@code divresult = MiniMath.innerDiv(new SlicedDouble(1.0), multresult, multresult.getNegativeSign(), 0);}<br>
 	 *
 	 * <p>That would be striclty as if you were using 
-	 * {@code MiniMath.pow(3432543.23423, -33.23423)}.
+	 * {@code MiniMath.pow(3432543.23423, -33.23423)} but in the true
+	 * {@code SlicedDouble} format.
 	 *
 	 * @param   number(n)  the base.
-     * @param   power(p)   integer part of the exponent.
+     * @param   power(p)   the integer part of the exponent.
      * @return  the value {@code n}<sup>{@code p}</sup>.
 	 */
-	public static SlashedDouble intPowerNoLimits(SlashedDouble number, SlashedDouble power) {
+	public static SlicedDouble intPowerNoLimits(SlicedDouble number, SlicedDouble power) {
 		long ipwr = abs(power).getIntSD().getIEEE754().longValue();
-		SlashedDouble result = new SlashedDouble(1.0);
+		SlicedDouble result = new SlicedDouble(1.0);
 
 		if (number.getIEEE754() == -1) {
 			if ((ipwr & 1) == 0) return result;
-			else return new SlashedDouble(-1.0);
+			else return new SlicedDouble(-1.0);
 		}
 		
 		for (int i = 0; i < intPwr.length; i++) {
@@ -319,61 +323,61 @@ public class MiniMath {
 	 * @return {@code number1*number2}
 	 */
 	public static Double mult(double number1, double number2) {	
-		return mult(new SlashedDouble(number1), new SlashedDouble(number2)).getIEEE754();
+		return mult(new SlicedDouble(number1), new SlicedDouble(number2)).getIEEE754();
 	}
 	
 	/**
-	 * Return {@code SlashedDouble} object that holds value of multiplication 
+	 * Return {@code SlicedDouble} object that holds value of multiplication 
 	 * values that inputs holds.
 	 *
 	 * <p><b>Important.</b>
-	 * <p>This method works directly with {@code SlashedDouble} type of inputs.
+	 * <p>This method works directly with {@code SlicedDouble} type of inputs.
 	 * If the arguments are not holding compilated {@code double} numbers
 	 * them will be computed, so if you do not wish to lose advantages of
-	 * using {@code SlashedDouble} type, you should not use this method.
+	 * using {@code SlicedDouble} type, you should not use this method.
 	 * Instead you may use {@code innerMult} method.
 	 *
-	 * @param number1 first multiplyer
-	 * @param number2 second multiplyer
+	 * @param number1 the first multiplyer
+	 * @param number2 the second multiplyer
 	 *
-	 * @return SlashedDouble that holds in value {@code number1*number2}
+	 * @return the SlicedDouble that holds in value {@code number1*number2}
 	 */
-	public static SlashedDouble mult(SlashedDouble number1, SlashedDouble number2) {
+	public static SlicedDouble mult(SlicedDouble number1, SlicedDouble number2) {
 		double factor1 = number1.getIEEE754(), factor2 = number2.getIEEE754();
 		
 		if (Double.isNaN(factor1) || Double.isNaN(factor2))	
-			return new SlashedDouble(Double.NaN);
+			return new SlicedDouble(Double.NaN);
 		else if (factor1 == 1) {
 			return number2;
 		} else if (factor2 == 1) {
 			return number1;
 		} else if (factor1 == 0xffffffff) {
-			return new SlashedDouble(-factor2);
+			return new SlicedDouble(-factor2);
 		} else if (factor2 == 0xffffffff) {
-			return new SlashedDouble(-factor1);
+			return new SlicedDouble(-factor1);
 		} else if (factor1 == 0.0 && !number1.isNegative()) {
 			if (factor2 == Double.NEGATIVE_INFINITY || factor2 == Double.POSITIVE_INFINITY)
-				return new SlashedDouble(Double.NaN);
-			else if (number2.isNegative()) return new SlashedDouble(-0.0);
-			else return new SlashedDouble(0.0);
+				return new SlicedDouble(Double.NaN);
+			else if (number2.isNegative()) return new SlicedDouble(-0.0);
+			else return new SlicedDouble(0.0);
 		} else if (factor1 == -0.0) {
 			if (factor2 == Double.NEGATIVE_INFINITY || factor2 == Double.POSITIVE_INFINITY) 
-				return new SlashedDouble(Double.NaN);
-			else if (number2.isNegative()) return new SlashedDouble(0.0);
-			else return new SlashedDouble(-0.0);
+				return new SlicedDouble(Double.NaN);
+			else if (number2.isNegative()) return new SlicedDouble(0.0);
+			else return new SlicedDouble(-0.0);
 		} else if (factor1 == Double.POSITIVE_INFINITY) {
-			if (factor2 == 0.0) return new SlashedDouble(Double.NaN);
-			else if (number2.isNegative()) return new SlashedDouble(Double.NEGATIVE_INFINITY);
+			if (factor2 == 0.0) return new SlicedDouble(Double.NaN);
+			else if (number2.isNegative()) return new SlicedDouble(Double.NEGATIVE_INFINITY);
 			else return number1;
 		} else if (factor1 == Double.NEGATIVE_INFINITY) {
-			if (factor2 == 0.0) return new SlashedDouble(Double.NaN);
-			else if (number2.isNegative()) return new SlashedDouble(Double.POSITIVE_INFINITY);
+			if (factor2 == 0.0) return new SlicedDouble(Double.NaN);
+			else if (number2.isNegative()) return new SlicedDouble(Double.POSITIVE_INFINITY);
 			else return number1;
 		} 
 		
 		String negativesign = getPairSign(number1, number2);
 		
-		SlashedDouble result = innerMult(number1, number2, negativesign);
+		SlicedDouble result = innerMult(number1, number2, negativesign);
 		result = checkExponentExtremum(result, 1024, -1075);
 		
 		if (result.getDouble() != null) {
@@ -386,7 +390,7 @@ public class MiniMath {
 	/**
 	 * Returns result sign of multiplication or division
 	 */
-	private static String getPairSign(SlashedDouble number1, SlashedDouble number2) {
+	private static String getPairSign(SlicedDouble number1, SlicedDouble number2) {
 		if ((!number1.isNegative() && !number2.isNegative()) || 
 			(number1.isNegative() && number2.isNegative())) return "";
 		
@@ -394,19 +398,42 @@ public class MiniMath {
 	}
 	
 	/**
-	 * Return {@code SlashedDouble} object that holds value of multiplication 
+	 * Return {@code SlicedDouble} object that holds value of multiplication 
 	 * of values that inputs holds.
 	 *
-	 * @param number1 		first multiplyer
-	 * @param number2 		second multiplyer
-	 * @param negativesign	result sign
+	 * <p>It can be used in a sheaf with {@code fractPower()} and {@code innerMult()}
+	 * methods to produce the same result as with using {@code pow()} method,
+	 * but without limitation of {@code double} type. The only limit that can happen
+	 * is an overflow of {@code integer} that holds an exponent if your
+	 * value will be too small or too large. But you can simply handle it by
+	 * checking inputs and outputs if such scenario may take a place.
 	 *
-	 * @return SlashedDouble that holds in value {@code number1*number2} with the sign that was supplied
+	 * <p>For example:<br>
+	 *
+	 * {@code SlicedDouble number = new SlicedDouble(3432543.23423);}<br>
+	 * {@code SlicedDouble power = new SlicedDouble(-33.23423);}<br><br>
+	 *
+	 * {@code SlicedDouble intpowresult, fractpowresult, multresult, divresult;}<br><br>
+	 *
+	 * {@code intpowresult = MiniMath.intPowerNoLimits(number, power);}<br>
+	 * {@code fractpowresult = MiniMath.fractPower(number, power);}<br>
+	 * {@code multresult = MiniMath.innerMult(intpowresult, fractpowresult, intpowresult.getNegativeSign());}<br>
+	 * {@code divresult = MiniMath.innerDiv(new SlicedDouble(1.0), multresult, multresult.getNegativeSign(), 0);}<br>
+	 *
+	 * <p>That would be striclty as if you were using 
+	 * {@code MiniMath.pow(3432543.23423, -33.23423)} but in the true
+	 * {@code SlicedDouble} format.
+	 *
+	 * @param number1 		the first multiplyer
+	 * @param number2 		the second multiplyer
+	 * @param negativesign	the result sign
+	 *
+	 * @return the SlicedDouble that holds in value {@code number1*number2} with the sign that was supplied
 	 */
-	public static SlashedDouble innerMult(SlashedDouble number1, SlashedDouble number2, String negativesign) {
+	public static SlicedDouble innerMult(SlicedDouble number1, SlicedDouble number2, String negativesign) {
 		
 		// this is a check of getting Double.NaN after intermidiate operations
-		// with pure SlashedDouble. When using one-time instructions that
+		// with pure SlicedDouble. When using one-time instructions that
 		// do not include chains this check is not take any valuable part.
 		if (number1.getDouble() != null && Double.isNaN(number1.getDouble()))
 			return number1;
@@ -467,7 +494,7 @@ public class MiniMath {
 		
 		int productexp = getMultExponent(raw, number1.getExp(), number2.getExp(), number1.getBinaryRaw(), number2.getBinaryRaw(), biasproduct);
 
-		return new SlashedDouble(raw, productexp, negativesign, product);
+		return new SlicedDouble(raw, productexp, negativesign);
 	}
 	
 	/**
@@ -486,29 +513,33 @@ public class MiniMath {
 	 * <p>It can be used in a sheaf with {@code intPower()} and {@code innerMult()}
 	 * methods to produce the same result as with using {@code pow()} method,
 	 * but without limitation of {@code double} type except those that is
-	 * too do not extract roots from negative numbers.
+	 * too do not extract roots from negative numbers. The only limit that can happen
+	 * is an overflow of {@code integer} that holds an exponent if your
+	 * value will be too small or too large. But you can simply handle it by
+	 * checking inputs and outputs if such scenario may take a place.
 	 *
-	 * <p>For example:
+	 * <p>For example:<br>
 	 *
-	 * {@code SlashedDouble number = new SlashedDouble(3432543.23423);}
-	 * {@code SlashedDouble power = new SlashedDouble(-33.23423);}
+	 * {@code SlicedDouble number = new SlicedDouble(3432543.23423);}<br>
+	 * {@code SlicedDouble power = new SlicedDouble(-33.23423);}<br><br>
 	 *
-	 * {@code SlashedDouble intpowresult, fractpowresult, multresult, divresult;}
+	 * {@code SlicedDouble intpowresult, fractpowresult, multresult, divresult;}<br><br>
 	 *
-	 * {@code intpowresult = intPowerNoLimits(number, power);}
-	 * {@code fractpowresult = fractPower(number, power);}
-	 * {@code multresult = innerMult(intpowresult, fractpowresult, intpowresult.getNegativeSign());}
-	 * {@code divresult = innerDiv(new SlashedDouble(1.0), multresult, multresult.getNegativeSign(), 0);}
+	 * {@code intpowresult = MiniMath.intPowerNoLimits(number, power);}<br>
+	 * {@code fractpowresult = MiniMath.fractPower(number, power);}<br>
+	 * {@code multresult = MiniMath.innerMult(intpowresult, fractpowresult, intpowresult.getNegativeSign());}<br>
+	 * {@code divresult = MiniMath.innerDiv(new SlicedDouble(1.0), multresult, multresult.getNegativeSign(), 0);}
 	 *
 	 * <p>That would be striclty as if you were using 
-	 * {@code MiniMath.pow(3432543.23423, -33.23423)}.
+	 * {@code MiniMath.pow(3432543.23423, -33.23423)} but in the true
+	 * {@code SlicedDouble} format.
 	 *
 	 * @param   number(n)  the base.
-     * @param   power(p)   fractional part of the exponent.
+     * @param   power(p)   the fractional part of the exponent.
      * @return  the value {@code n}<sup>{@code p}</sup>.
 	 */
-	public static SlashedDouble fractPower(SlashedDouble number, SlashedDouble power) {
-		if (!number.getNegativeSign().isEmpty()) return new SlashedDouble(Double.NaN);
+	public static SlicedDouble fractPower(SlicedDouble number, SlicedDouble power) {
+		if (!number.getNegativeSign().isEmpty()) return new SlicedDouble(Double.NaN);
 		else if (number.getDouble() != null && Double.isNaN(number.getDouble()))
 			return number;
 		else if (power.getDouble() != null && Double.isNaN(power.getDouble()))
@@ -516,7 +547,7 @@ public class MiniMath {
 
 		String powerraw = power.getFractRaw();
 		int powerexp = power.getExp();
-		SlashedDouble result = new SlashedDouble(1.0);
+		SlicedDouble result = new SlicedDouble(1.0);
 		
 		for (int i = 0xffffffff; i > powerexp; i--) {
 			number = innerRoot(number);
@@ -536,12 +567,12 @@ public class MiniMath {
 		return result;
 	}
 	
-	// here we use boolean type of returning value instead of SlashedDouble like it was
+	// here we use boolean type of returning value instead of SlicedDouble like it was
 	// in getIntPowerResult(), because of optimization of required computations
 	/**
 	 * Auxiliary method to check if number is collapsed to '1'
 	 */
-	private static boolean getFractPowerResult(SlashedDouble number) {
+	private static boolean getFractPowerResult(SlicedDouble number) {
 		if (number.getExp() == 0) {
 			if (number.getBinaryRaw().equals("1")) return true;
 		}
@@ -557,19 +588,19 @@ public class MiniMath {
 	 * in part that it do not rounding final result, and for that to
 	 * meet names of other similar methods in current class.
 	 *
-	 * @param number value
+	 * @param number the value
 	 * @return the positive square root of {@code number}.
      * 			If the argument is NaN or less than zero, the result is NaN.
 	 */
-	public static SlashedDouble innerRoot(SlashedDouble number) {
+	public static SlicedDouble innerRoot(SlicedDouble number) {
 		
 		// this ia a check of passing Double.NaN or negative values
-		// after intermidiate operations with pure SlashedDouble.
+		// after intermidiate operations with pure SlicedDouble.
 		// When using one-time instructions that do not include chains
 		// this check is not take any valuable part.
 		if (!number.getNegativeSign().isEmpty() || 
 			(number.getDouble() != null && Double.isNaN(number.getDouble()))) 
-			return new SlashedDouble(Double.NaN);
+			return new SlicedDouble(Double.NaN);
 		
 		String numraw = number.getBinaryRaw(), residualstr;
 		long minuend = 0l, subtrahend, residual;
@@ -693,7 +724,7 @@ public class MiniMath {
 
 		int resultexp = getRootExponent(number.getExp());
 		
-		return new SlashedDouble(result, resultexp, "");
+		return new SlicedDouble(result, resultexp, "");
 	}
 	
 	/**
@@ -707,17 +738,43 @@ public class MiniMath {
 		}
 	}
 	
+	/**
+	 * Returns result of the divison.
+	 *
+	 * <p><b>Caution:</b>If the divisor is '0' there is no exception,
+	 * instead you will get an Infinity, positive or negative.
+	 *
+	 * @param dividend	the dividend number
+	 * @param divisor	the divisor number
+	 * @return quotient
+	 */
 	public static Double division(double dividend, double divisor) {
-		return division(new SlashedDouble(dividend), new SlashedDouble(divisor)).getIEEE754();
+		return division(new SlicedDouble(dividend), new SlicedDouble(divisor)).getIEEE754();
 	}
-	
-	public static SlashedDouble division(SlashedDouble dividend, SlashedDouble divisor) {
-		SlashedDouble check = divisionPreCheck(dividend, divisor);
+	/**
+	 * Returns result of the divison
+	 *
+	 * <p><b>Important.</b>
+	 * <p>This method works directly with {@code SlicedDouble} type of inputs.
+	 * If the arguments are not holding compilated {@code double} numbers
+	 * them will be computed, so if you do not wish to lose advantages of
+	 * using {@code SlicedDouble} type, you should not use this method.
+	 * Instead you may use separately {@code innerDiv()} with '0' featuresign.
+	 *
+	 * <p><b>Caution:</b>If the divisor is '0' there is no exception,
+	 * instead you will get an Infinity, positive or negative.
+	 *
+	 * @param dividend	the dividend number
+	 * @param divisor	the divisor number
+	 * @return quotient
+	 */
+	public static SlicedDouble division(SlicedDouble dividend, SlicedDouble divisor) {
+		SlicedDouble check = divisionPreCheck(dividend, divisor);
 		if (check != null) return check;
 		
 		String negativesign = getPairSign(dividend, divisor);
 
-		SlashedDouble result = innerDiv(dividend, divisor, negativesign, 0);
+		SlicedDouble result = innerDiv(dividend, divisor, negativesign, 0);
 		result = checkExponentExtremum(result, 1024, -1075);
 		
 		if (result.getDouble() != null) {
@@ -727,20 +784,47 @@ public class MiniMath {
 		return result;
 	}
 	
+	/**
+	 * Returns integer result of the divison
+	 *
+	 * <p><b>Caution:</b>If the divisor is '0' there is no exception,
+	 * instead you will get an Infinity, positive or negative.
+	 *
+	 * @param dividend	the dividend number
+	 * @param divisor	the divisor number
+	 * @return integer quotient
+	 */
 	public static Double div(double dividend, double divisor) {
-		return div(new SlashedDouble(dividend), new SlashedDouble(divisor)).getIEEE754();
+		return div(new SlicedDouble(dividend), new SlicedDouble(divisor)).getIEEE754();
 	}
 	
-	public static SlashedDouble div(SlashedDouble dividend, SlashedDouble divisor) {
+	/**
+	 * Returns integer result of the divison
+	 *
+	 * <p><b>Important.</b>
+	 * <p>This method works directly with {@code SlicedDouble} type of inputs.
+	 * If the arguments are not holding compilated {@code double} numbers
+	 * them will be computed, so if you do not wish to lose advantages of
+	 * using {@code SlicedDouble} type, you should not use this method.
+	 * Instead you may use separately {@code innerDiv()} with '1' featuresign.
+	 *
+	 * <p><b>Caution:</b>If the divisor is '0' there is no exception,
+	 * instead you will get an Infinity, positive or negative.
+	 *
+	 * @param dividend	the dividend number
+	 * @param divisor	the divisor number
+	 * @return integer quotient
+	 */
+	public static SlicedDouble div(SlicedDouble dividend, SlicedDouble divisor) {
 		String negativesign = getPairSign(dividend, divisor);
 		
 		if (dividend.getExp() < divisor.getExp())
-			return new SlashedDouble("", 0, negativesign);
+			return new SlicedDouble("", 0, negativesign);
 		
-		SlashedDouble check = divisionPreCheck(dividend, divisor);
+		SlicedDouble check = divisionPreCheck(dividend, divisor);
 		if (check != null) return check;
 
-		SlashedDouble result = innerDiv(dividend, divisor, negativesign, 1).getIntSD();
+		SlicedDouble result = innerDiv(dividend, divisor, negativesign, 1).getIntSD();
 		result = checkExponentExtremum(result, 1024, -1075);
 		
 		if (result.getDouble() != null) {
@@ -750,22 +834,57 @@ public class MiniMath {
 		return result;
 	}
 	
+	/**
+	 * Returns the largest (closest to positive infinity) integer value
+	 * that is less than or equal to the algebraic quotient
+	 *
+	 * <p><b>Caution:</b>If the divisor is '0' there is no exception,
+	 * instead you will get an Infinity, positive or negative. Because we
+	 * are using double arithmetic, not integer. And if divisor is also 0
+	 * the result would be Double.NaN
+	 *
+	 * @param dividend	the dividend number
+	 * @param divisor	the divisor number
+	 * @return the largest (closest to positive infinity) integer value
+	 * 			that is less than or equal to the algebraic quotient
+	 */
 	public static Double floorDiv(double dividend, double divisor) {
-		return floorDiv(new SlashedDouble(dividend), new SlashedDouble(divisor)).getIEEE754();
+		return floorDiv(new SlicedDouble(dividend), new SlicedDouble(divisor)).getIEEE754();
 	}
 	
-	public static SlashedDouble floorDiv(SlashedDouble dividend, SlashedDouble divisor) {
-		SlashedDouble check = divisionPreCheck(dividend, divisor);
+	/**
+	 * Returns the largest (closest to positive infinity) integer value
+	 * that is less than or equal to the algebraic quotient
+	 *
+	 * <p><b>Important.</b>
+	 * <p>This method works directly with {@code SlicedDouble} type of inputs.
+	 * If the arguments are not holding compilated {@code double} numbers
+	 * them will be computed, so if you do not wish to lose advantages of
+	 * using {@code SlicedDouble} type, you should not use this method.
+	 * Instead you may use separately {@code innerDiv()} with '2' featuresign.
+	 *
+	 * <p><b>Caution:</b>If the divisor is '0' there is no exception,
+	 * instead you will get an Infinity, positive or negative. Because we
+	 * are using double arithmetic, not integer. And if divisor is also 0
+	 * the result would be Double.NaN
+	 *
+	 * @param dividend	the dividend number
+	 * @param divisor	the divisor number
+	 * @return the largest (closest to positive infinity) integer value
+	 * 			that is less than or equal to the algebraic quotient
+	 */
+	public static SlicedDouble floorDiv(SlicedDouble dividend, SlicedDouble divisor) {
+		SlicedDouble check = divisionPreCheck(dividend, divisor);
 		if (check != null) return check;
 		
 		String negativesign = getPairSign(dividend, divisor);
 		
 		if (dividend.getExp() < divisor.getExp()) {
-			if (negativesign.length() > 0) return new SlashedDouble("1", 0, negativesign);
-			return new SlashedDouble("", 0, negativesign);
+			if (negativesign.length() > 0) return new SlicedDouble("1", 0, negativesign);
+			return new SlicedDouble("", 0, negativesign);
 		}
 		
-		SlashedDouble result = innerDiv(dividend, divisor, negativesign, 2).getIntSD();;
+		SlicedDouble result = innerDiv(dividend, divisor, negativesign, 2).getIntSD();
 		result = checkExponentExtremum(result, 1024, -1075);
 		
 		if (result.getDouble() != null) {
@@ -775,69 +894,105 @@ public class MiniMath {
 		return result;
 	}
 	
-	private static SlashedDouble divisionPreCheck(SlashedDouble dividend, SlashedDouble divisor) {
-		double dividendnum = dividend.getDouble(), divisornum = divisor.getDouble();
+	/**
+	 * Auxiliary method to precheck of division components
+	 */
+	private static SlicedDouble divisionPreCheck(SlicedDouble dividend, SlicedDouble divisor) {
+		double dividendnum = dividend.getIEEE754(), divisornum = divisor.getIEEE754();
 		
 		if (Double.isNaN(divisornum) || Double.isNaN(dividendnum)) 
-			return new SlashedDouble(Double.NaN);
+			return new SlicedDouble(Double.NaN);
 		else if (divisornum == 1.0) return dividend;
-		else if (divisornum == -1.0) return new SlashedDouble(-dividendnum);
+		else if (divisornum == -1.0) return new SlicedDouble(-dividendnum);
 		else if (divisornum == 0.0) {
-			if (dividendnum == 0.0) return new SlashedDouble(Double.NaN);
+			if (dividendnum == 0.0) return new SlicedDouble(Double.NaN);
 			else {
 				if (divisor.isNegative() && dividend.isNegative() || 
 					!divisor.isNegative() && !dividend.isNegative()) {
-					return new SlashedDouble(Double.POSITIVE_INFINITY);
+					return new SlicedDouble(Double.POSITIVE_INFINITY);
 				} else {
-					return new SlashedDouble(Double.NEGATIVE_INFINITY);
+					return new SlicedDouble(Double.NEGATIVE_INFINITY);
 				}
 			}
 		} 
 		else if (divisornum == Double.POSITIVE_INFINITY) {
 			if (dividendnum == Double.POSITIVE_INFINITY || dividendnum == Double.NEGATIVE_INFINITY)
-				return new SlashedDouble(Double.NaN);
-			else if (dividend.isNegative()) return new SlashedDouble(-0.0);
-			else return new SlashedDouble(0.0);
+				return new SlicedDouble(Double.NaN);
+			else if (dividend.isNegative()) return new SlicedDouble(-0.0);
+			else return new SlicedDouble(0.0);
 		} else if (divisornum == Double.NEGATIVE_INFINITY) {
 			if (dividendnum == Double.POSITIVE_INFINITY || dividendnum == Double.NEGATIVE_INFINITY)
-				return new SlashedDouble(Double.NaN);
-			else if (dividend.isNegative()) return new SlashedDouble(0.0);
-			else return new SlashedDouble(-0.0);
+				return new SlicedDouble(Double.NaN);
+			else if (dividend.isNegative()) return new SlicedDouble(0.0);
+			else return new SlicedDouble(-0.0);
 		} else if (dividendnum == 0.0 && !dividend.isNegative()) {
-			if (divisor.isNegative()) return new SlashedDouble(-0.0);
-			else return new SlashedDouble(0.0);
+			if (divisor.isNegative()) return new SlicedDouble(-0.0);
+			else return new SlicedDouble(0.0);
 		} else if (dividendnum == -0.0) {
-			if (divisor.isNegative()) return new SlashedDouble(0.0);
-			else return new SlashedDouble(-0.0);
+			if (divisor.isNegative()) return new SlicedDouble(0.0);
+			else return new SlicedDouble(-0.0);
 		} else if (dividendnum == Double.POSITIVE_INFINITY) {
-			if (divisor.isNegative()) return new SlashedDouble(Double.NEGATIVE_INFINITY);
+			if (divisor.isNegative()) return new SlicedDouble(Double.NEGATIVE_INFINITY);
 			else return dividend;
 		} else if (dividendnum == Double.NEGATIVE_INFINITY) {
-			if (divisor.isNegative()) return new SlashedDouble(Double.POSITIVE_INFINITY);
+			if (divisor.isNegative()) return new SlicedDouble(Double.POSITIVE_INFINITY);
 			else return dividend;
 		}
 		
 		return null;
 	}
 	
+	/**
+	 * Returns the nearest integer (closest to zero) that is 
+	 * that is less than or equal to the algebraic quotient if the divisor
+	 * is positive, and larger than or equal if the divisor is negative.
+	 *
+	 * <p><b>Caution:</b>If the divisor is '0' there is no exception,
+	 * instead if the divisor is also 0 you will get Double.NaN as the result.
+	 * Or if divisor is not 0, you will get 0.0 as a result.
+	 *
+	 * @param dividend	the dividend number
+	 * @param divisor	the divisor number
+	 * @return division remainder closest to zero
+	 */
 	public static Double divisionRemainder(double dividend, double divisor) {
-		return divisionRemainder(new SlashedDouble(dividend), new SlashedDouble(divisor)).getIEEE754();
+		return divisionRemainder(new SlicedDouble(dividend), new SlicedDouble(divisor)).getIEEE754();
 	}
 	
-	public static SlashedDouble divisionRemainder(SlashedDouble dividend, SlashedDouble divisor) {
-		SlashedDouble check = remainderPreCheck(dividend, divisor);
+	/**
+	 * Returns the nearest integer (closest to zero) that is 
+	 * that is less than or equal to the algebraic quotient if the divisor
+	 * is positive, and larger than or equal if the divisor is negative.
+	 *
+	 * <p><b>Important.</b>
+	 * <p>This method works directly with {@code SlicedDouble} type of inputs.
+	 * If the arguments are not holding compilated {@code double} numbers
+	 * them will be computed, so if you do not wish to lose advantages of
+	 * using {@code SlicedDouble} type, you should not use this method.
+	 * Instead you may use separately {@code innerDiv()} with '3' featuresign.
+	 *
+	 * <p><b>Caution:</b>If the divisor is '0' there is no exception,
+	 * instead if the divisor is also 0 you will get Double.NaN as the result.
+	 * Or if divisor is not 0, you will get 0.0 as a result.
+	 *
+	 * @param dividend	the dividend number
+	 * @param divisor	the divisor number
+	 * @return division remainder closest to zero
+	 */
+	public static SlicedDouble divisionRemainder(SlicedDouble dividend, SlicedDouble divisor) {
+		SlicedDouble check = remainderPreCheck(dividend, divisor);
 		if (check != null) return check;
 
 		String negativesign;
 		if (dividend.isNegative()) negativesign = "-";
 		else negativesign = "";
 		
-		if (divisor.getDouble() == Double.POSITIVE_INFINITY || 
-			divisor.getDouble() == Double.NEGATIVE_INFINITY || 
+		if (divisor.getIEEE754() == Double.POSITIVE_INFINITY || 
+			divisor.getIEEE754() == Double.NEGATIVE_INFINITY || 
 			dividend.getExp() < divisor.getExp())
 			return dividend;
 		
-		SlashedDouble result = innerDiv(dividend, divisor, negativesign, 3);
+		SlicedDouble result = innerDiv(dividend, divisor, negativesign, 3);
 		
 		// here we don't need to additional check for overflowing,
 		// for the reason that we already had to check input operands
@@ -846,38 +1001,115 @@ public class MiniMath {
 		return result;
 	}
 	
-	private static SlashedDouble remainderPreCheck(SlashedDouble dividend, SlashedDouble divisor) {
-		double dividendnum = dividend.getDouble(), divisornum = divisor.getDouble();
+	/**
+	 * Auxiliary method to precheck of division remainder operation components
+	 */
+	private static SlicedDouble remainderPreCheck(SlicedDouble dividend, SlicedDouble divisor) {
+		double dividendnum = dividend.getIEEE754(), divisornum = divisor.getIEEE754();
 		
 		if (Double.isNaN(divisornum) || Double.isNaN(dividendnum)) 
-			return new SlashedDouble(Double.NaN);
+			return new SlicedDouble(Double.NaN);
 		else if (divisornum == 1.0 || divisornum == -1.0)
-			return new SlashedDouble(0.0);
-		else if (divisornum == 0.0 && dividendnum == 0.0)
-			return new SlashedDouble(Double.NaN);
-		else if (dividendnum == 0.0)
-			return new SlashedDouble(0.0);
+			return new SlicedDouble(0.0);
+		else if (dividendnum == 0.0 && divisornum == 0.0)
+			return new SlicedDouble(Double.NaN);
+		else if (dividendnum == 0.0 || divisornum == 0.0)
+			return new SlicedDouble(0.0);
 		
 		return null;
 	}
 	
+	/**
+	 * Returns the floor modulus of inputs.
+	 *
+	 * <p>The formula of modulus is:
+	 *
+	 * <p><i>dividend - (floorDiv(dividend, divisor) * divisor)</i>
+	 *
+	 * <p>First of all floorDiv is happend and there is a few special
+	 * cases that can occur:
+	 *
+	 * <ul>
+	 *	<li>result of floorDiv is Double.NaN than overall result
+	 *			is the same.</li>
+	 *	<li>result of floorDiv is Double.POSITIVE_INFINITY or
+	 *			Double.NEGATIVE_INFINITY than if <i>dividend</i> is
+	 *			Double.POSITIVE_INFINITY or	Double.NEGATIVE_INFINITY than
+	 *			overall result is Double.NaN, and if not - overall result is
+	 *			dividend.</li>
+	 *	<li>result of floorDiv is 0.0 than overall result is dividend.</li>
+	 * </ul>
+	 *
+	 * <p><b>Caution:</b>If the divisor is '0' there is no exception,
+	 * instead if the divisor is also 0 you will get Double.NaN as the result.
+	 *
+	 *
+	 * @param dividend	the dividend number
+	 * @param divisor	the divisor number
+	 * @return the floor modulus
+	 */
 	public static Double floorMod(double dividend, double divisor) {
-		return floorMod(new SlashedDouble(dividend), new SlashedDouble(divisor)).getIEEE754();
+		return floorMod(new SlicedDouble(dividend), new SlicedDouble(divisor)).getIEEE754();
 	}
 	
-	public static SlashedDouble floorMod(SlashedDouble dividend, SlashedDouble divisor) {
-		SlashedDouble result = floorDiv(dividend, divisor);
-		
+	/**
+	 * Returns the floor modulus of inputs.
+	 *
+	 * <p>The formula of modulus is:
+	 *
+	 * <p><i>dividend - (floorDiv(dividend, divisor) * divisor)</i>
+	 *
+	 * <p>First of all floorDiv is happend and there is a few special
+	 * cases that can occur:
+	 *
+	 * <ul>
+	 *	<li>result of floorDiv is Double.NaN than overall result
+	 *			is the same.</li>
+	 *	<li>result of floorDiv is Double.POSITIVE_INFINITY or
+	 *			Double.NEGATIVE_INFINITY than if <i>dividend</i> is
+	 *			Double.POSITIVE_INFINITY or	Double.NEGATIVE_INFINITY than
+	 *			overall result is Double.NaN, and if not - overall result is
+	 *			dividend.</li>
+	 *	<li>result of floorDiv is 0.0 than overall result is dividend.</li>
+	 * </ul>
+	 *
+	 * <p><b>Important.</b>
+	 * <p>This method works directly with {@code SlicedDouble} type of inputs.
+	 * If the arguments are not holding compilated {@code double} numbers
+	 * them will be computed, so if you do not wish to lose advantages of
+	 * using {@code SlicedDouble} type, you should not use this method.
+	 * Instead you may use it like that:<br>
+	 *
+	 * {@code SlicedDouble dividend = new SlicedDouble(345.34);}<br>
+	 * {@code SlicedDouble divisor = new SlicedDouble(23.53);}<br>
+	 * {@code SlicedDouble floordiv = MiniMath.innerDiv(dividend, divisor, "", 2).getIntSD();}<br>
+	 * {@code SlicedDouble innermult = MiniMath.innerMult(floordiv, divisor, floordiv.getNegativeSign());}<br>
+	 * {@code SlicedDouble innersub = MiniMath.innerSub(dividend, innermult);}
+	 *
+	 *
+	 * <p>That would be striclty as if you were using 
+	 * {@code MiniMath.floorMod(345.34, 23.53)} but in the true
+	 * {@code SlicedDouble} format.
+	 *
+	 * <p><b>Caution:</b>If the divisor is '0' there is no exception,
+	 * instead if the divisor is also '0' you will get Double.NaN as the result.
+	 *
+	 *
+	 * @param dividend	the dividend number
+	 * @param divisor	the divisor number
+	 * @return the floor modulus
+	 */
+	public static SlicedDouble floorMod(SlicedDouble dividend, SlicedDouble divisor) {
+		SlicedDouble result = floorDiv(dividend, divisor);
 		
 		if (result.getDouble() != null) {
 			if (result.getDouble() == Double.NaN) return result;
 			else if (result.getDouble() == Double.POSITIVE_INFINITY || 
 				result.getDouble() == Double.NEGATIVE_INFINITY) {
 				if (dividend.getDouble() == Double.POSITIVE_INFINITY || dividend.getDouble() == Double.NEGATIVE_INFINITY)
-					return new SlashedDouble(Double.NaN);
+					return new SlicedDouble(Double.NaN);
 				else return dividend;
-			} else if (result.getDouble() == 0.0) {
-				
+			} else if (result.getDouble() == 0.0) {	
 				return dividend;
 			}
 		}
@@ -891,7 +1123,7 @@ public class MiniMath {
 		result = checkExponentExtremum(result, 1024, -1075);
 		if (result.getDouble() != null) {
 			if (result.getDouble() == Double.POSITIVE_INFINITY) {
-				if (negativesign.isEmpty()) return new SlashedDouble(Double.NEGATIVE_INFINITY);
+				if (negativesign.isEmpty()) return new SlicedDouble(Double.NEGATIVE_INFINITY);
 				else return result;
 			} else {
 				if (negativesign.isEmpty()) result.setSign("-");
@@ -902,17 +1134,63 @@ public class MiniMath {
 		return innerSub(dividend, result);
 	}
 	
-	// if (featuresign == 0) - returns result of full division
-	// if (featuresign == 1) - returns result of integer division
-	// if (featuresign == 2) - returns result of integer division toward negative infinity rounding
-	// if (featuresign == 3) - returns remainder of division
-	public static SlashedDouble innerDiv(SlashedDouble dividend, SlashedDouble divisor, String negativesign, int featuresign) {
+	// 
+	/**
+	 * Returns result of the division of dividend and divisor
+	 *
+	 * <p>It can be used in a sheaf with {@code intPower()}, {@code fractPower()}
+	 * and {@code innerMult()} methods to produce the same result,
+	 * as with using {@code pow()} method but without limitation  those that is
+	 * of {@code double} type except that it also does not extracting roots 
+	 * from negative numbers. The only limit that can happen
+	 * is an overflow of {@code integer} that holds an exponent if your
+	 * value will be too small or too large. But you can simply handle it by
+	 * checking inputs and outputs if such scenario may take a place.
+	 *
+	 * <p>For example:<br>
+	 *
+	 * {@code SlicedDouble number = new SlicedDouble(3432543.23423);}<br>
+	 * {@code SlicedDouble power = new SlicedDouble(-33.23423);}<br><br>
+	 *
+	 * {@code SlicedDouble intpowresult, fractpowresult, multresult, divresult;}<br><br>
+	 *
+	 * {@code intpowresult = MiniMath.intPowerNoLimits(number, power);}<br>
+	 * {@code fractpowresult = MiniMath.fractPower(number, power);}<br>
+	 * {@code multresult = MiniMath.innerMult(intpowresult, fractpowresult, intpowresult.getNegativeSign());}<br>
+	 * {@code divresult = MiniMath.innerDiv(new SlicedDouble(1.0), multresult, multresult.getNegativeSign(), 0);}
+	 *
+	 * <p>That would be striclty as if you were using 
+	 * {@code MiniMath.pow(3432543.23423, -33.23423)} but in the true
+	 * {@code SlicedDouble} format.
+	 *
+	 * <p>The featuresign parameter accept several different values:
+	 * <ul> 
+	 *	<li>if (featuresign == 0) - returns result of full division;</li>
+	 *	<li>if (featuresign == 1) - returns result of integer division;</li>
+	 *	<li>if (featuresign == 2) - returns result floor division;</li>
+	 *	<li>if (featuresign == 3) - returns remainder of division;</li>
+	 * </ul>
+	 *
+	 * <p>This method is also may be used to get an intermidiate results
+	 * of {@code SlicedDouble} type. But aware to going over the limits
+	 * in case of using floorDiv or floorMod operations that may get
+	 * negative values. The result will be precalculated to valid
+	 * {@code Double} type. So here you may lose the advantages of
+	 * {@code SlicedDouble} type.
+	 *
+	 * @param dividend		the dividend number
+	 * @param divisor		the divisor number
+	 * @param negativesign	the negativesign
+	 * @param featuresign	the operation sign
+	 * @return the quotient
+	 */
+	public static SlicedDouble innerDiv(SlicedDouble dividend, SlicedDouble divisor, String negativesign, int featuresign) {
 		if (dividend.getDouble() != null && Double.isNaN(dividend.getDouble()))
 			return dividend;
 		else if (divisor.getDouble() != null && Double.isNaN(divisor.getDouble()))
 			return divisor;
 		else if (dividend.getBinaryRaw().isEmpty() && divisor.getBinaryRaw().isEmpty()) {
-			return new SlashedDouble(Double.NaN);
+			return new SlicedDouble(Double.NaN);
 		}
 			
 		String dividendraw = dividend.getBinaryRaw();
@@ -993,20 +1271,27 @@ public class MiniMath {
 			// we need to handle it by substracion of -1 to the final result before returning it
 			if (featuresign == 2 && negativesign.length() > 0 
 				&& dividendraw.indexOf('1') > 0xffffffff) {
-				return new SlashedDouble(
-					new SlashedDouble(quotient, resultexp, negativesign)
+				return new SlicedDouble(
+					new SlicedDouble(quotient, resultexp, negativesign)
 						.getIEEE754() + 0xffffffff);
+						
 			}
-			return new SlashedDouble(quotient, resultexp, negativesign);
+			return new SlicedDouble(quotient, resultexp, negativesign);
 		} else {
-			return new SlashedDouble(dividendraw, resultexp, negativesign);
+			return new SlicedDouble(dividendraw, resultexp, negativesign);
 		}
 	}
 	
+	/**
+	 * Auxiliary method to get quotient exponent
+	 */
 	private static int getDivisionExponent(int dividendexp, int divisorexp, int initialzero) {
 		return dividendexp + ~divisorexp + ~initialzero + 2;
 	}
 	
+	/**
+	 * Auxiliary method to get division remainder exponent
+	 */
 	private static int getRemainderExponent(int dividendexp, String dividendraw) {
 		int remainderstart = dividendraw.indexOf('1');
 		
@@ -1014,97 +1299,210 @@ public class MiniMath {
 		else return dividendexp + ~dividendraw.indexOf('1') + 1;
 	}
 	
+	/**
+	 * Returns absolute value of giving number.
+	 *
+	 * <p>If number is positive, result will be the same,
+	 * and if not result will be -number;
+	 *
+	 * @param number the number
+	 * @return the absolute value of a giving number
+	 */
 	public static Double abs(double number) {
-		return abs(new SlashedDouble(number)).getIEEE754();
+		return abs(new SlicedDouble(number)).getIEEE754();
 	}
 	
-	public static SlashedDouble abs(SlashedDouble number) {
-		SlashedDouble numberclone = number.clone();
+	/**
+	 * Returns absolute value of giving number.
+	 *
+	 * <p>If number is positive, result will be the same,
+	 * and if not result will be -number;
+	 *
+	 * <p>This method do not implement mutation, instead
+	 * the new object of {@code SlicedDouble} type is created.
+	 *
+	 * @param number the number
+	 * @return the absolute value of a giving number
+	 */
+	public static SlicedDouble abs(SlicedDouble number) {
+		SlicedDouble numberclone = number.clone();
 		numberclone.setSign("");
 		
 		return numberclone;
 	}
 	
+	/**
+	 * Returns the largest (closest to positive infinity) number that is 
+	 * less than or equal to the argument and is equal to a mathematical integer.
+	 *
+	 * @param number the number
+	 * @return the largest (closest to positive infinity) number that is 
+	 * 			less than or equal to the argument and is equal to a mathematical integer.
+	 */
 	public static Double floor(double number) {	
-		return floor(new SlashedDouble(number)).getIEEE754(); 
+		return floor(new SlicedDouble(number)).getIEEE754(); 
 	}
 	
-	public static SlashedDouble floor(SlashedDouble number) {
+	/**
+	 * Returns the largest (closest to positive infinity) number that is 
+	 * less than or equal to the argument and is equal to a mathematical integer.
+	 *
+	 * @param number the number
+	 * @return the largest (closest to positive infinity) number that is 
+	 * 			less than or equal to the argument and is equal to a mathematical integer.
+	 */
+	public static SlicedDouble floor(SlicedDouble number) {
 		double dblnumber = number.getIntSD().getIEEE754();
 		
 		if (Double.isNaN(dblnumber) || dblnumber == Double.POSITIVE_INFINITY || 
 			dblnumber == Double.NEGATIVE_INFINITY || number.getNegativeSign().isEmpty())
 			return number.getIntSD();
 		else {
-			if (number.getFractRaw().length() > 0) return new SlashedDouble(dblnumber + 0xffffffff);
+			if (number.getFractRaw().length() > 0) return new SlicedDouble(dblnumber + 0xffffffff);
 			else return number.getIntSD();
 		}
 	}
 	
+	/**
+	 * Returns the smallest (closest to negative infinity) number that is greater
+	 * than or equal to the argument and is equal to a mathematical integer
+	 *
+	 * @param number the number
+	 * @return the smallest (closest to negative infinity) number that is greater 
+	 *			than or equal to the argument and is equal to a mathematical integer
+	 */
 	public static Double ceil(double number) {
-		return ceil(new SlashedDouble(number)).getIEEE754(); 
+		return ceil(new SlicedDouble(number)).getIEEE754(); 
 	}
 	
-	public static SlashedDouble ceil(SlashedDouble number) {
+	/**
+	 * Returns the smallest (closest to negative infinity) number that is greater
+	 * than or equal to the argument and is equal to a mathematical integer
+	 *
+	 * @param number the number
+	 * @return the smallest (closest to negative infinity) number that is greater 
+	 *			than or equal to the argument and is equal to a mathematical integer
+	 */
+	public static SlicedDouble ceil(SlicedDouble number) {
 		double dblnumber = floor(number).getIEEE754();
 		
 		if (number.getFractRaw() != null && number.getFractRaw().length() > 0) {
 			++dblnumber;
-			if (dblnumber == 0.0) return new SlashedDouble("", 0, "-");
+			if (dblnumber == 0.0) return new SlicedDouble("", 0, "-");
 		} 
 		
-		return new SlashedDouble(dblnumber);
+		return new SlicedDouble(dblnumber);
 	}
 	
-	// this method returns value of fractional part that is closest to zero
+	/**
+	 * Returns value of fractional part of a giving number that is closest to zero
+	 *
+	 * @param number the number
+	 * @return value of fractional part of a giving number that is closest to zero
+	 */
 	public static Double fraction(double number) {
-		return fraction(new SlashedDouble(number)).getIEEE754(); 
+		return fraction(new SlicedDouble(number)).getIEEE754(); 
 	}
 	
-	public static SlashedDouble fraction(SlashedDouble number) {
+	/**
+	 * Returns value of fractional part of a giving number that is closest to zero
+	 *
+	 * @param number the number
+	 * @return value of fractional part of a giving number that is closest to zero
+	 */
+	public static SlicedDouble fraction(SlicedDouble number) {
 		return number.getFractSD();
 	}
 	
+	/**
+	 * Return result of substracion
+	 *
+	 * @param minuend 		the minuend
+	 * @param subtrahend 	the subtrahend
+	 * @return the residual
+	 */
 	public static Double substraction(double minuend, double subtrahend) {
-		return substraction(new SlashedDouble(minuend), new SlashedDouble(subtrahend)).getIEEE754();
+		return substraction(new SlicedDouble(minuend), new SlicedDouble(subtrahend)).getIEEE754();
 	}
 	
-	public static SlashedDouble substraction(SlashedDouble minuend, SlashedDouble subtrahend) {
-		double minuendnum = minuend.getDouble(), subtrahendnum = subtrahend.getDouble();
+	/**
+	 * Return result of substracion
+	 *
+	 * <p><b>Important.</b>
+	 * <p>This method works directly with {@code SlicedDouble} type of inputs.
+	 * If the arguments are not holding compilated {@code double} numbers
+	 * them will be computed, so if you do not wish to lose advantages of
+	 * using {@code SlicedDouble} type, you should not use this method.
+	 * Instead you may use {@code innerSub()}:
+	 *
+	 * @param minuend 		the minuend
+	 * @param subtrahend 	the subtrahend
+	 * @return the residual
+	 */
+	public static SlicedDouble substraction(SlicedDouble minuend, SlicedDouble subtrahend) {
+		double minuendnum = minuend.getIEEE754(), subtrahendnum = subtrahend.getIEEE754();
 		
 		if (Double.isNaN(minuendnum) || Double.isNaN(subtrahendnum))
-			return new SlashedDouble(Double.NaN);
+			return new SlicedDouble(Double.NaN);
 		else if (minuendnum == Double.POSITIVE_INFINITY) {
-			if (subtrahendnum == Double.POSITIVE_INFINITY) return new SlashedDouble(Double.NaN);
+			if (subtrahendnum == Double.POSITIVE_INFINITY) return new SlicedDouble(Double.NaN);
 			else return minuend;
 		} else if (minuendnum == Double.NEGATIVE_INFINITY) {
-			if (subtrahendnum == Double.NEGATIVE_INFINITY) return new SlashedDouble(Double.NaN);
+			if (subtrahendnum == Double.NEGATIVE_INFINITY) return new SlicedDouble(Double.NaN);
 			else return minuend;
 		} else if (subtrahendnum == Double.POSITIVE_INFINITY)
-			return new SlashedDouble(Double.NEGATIVE_INFINITY);
+			return new SlicedDouble(Double.NEGATIVE_INFINITY);
 		else if (subtrahendnum == Double.NEGATIVE_INFINITY)
-			return new SlashedDouble(Double.POSITIVE_INFINITY);
+			return new SlicedDouble(Double.POSITIVE_INFINITY);
 		else if (subtrahendnum == 0.0) return minuend;
 		else if (minuendnum == 0.0)  {
-			SlashedDouble clonesubtrahend = subtrahend.clone();
+			SlicedDouble clonesubtrahend = subtrahend.clone();
 			clonesubtrahend.reverseSign();
 			return clonesubtrahend;
 		}
 		
-		SlashedDouble result = innerSub(minuend, subtrahend);
+		SlicedDouble result = innerSub(minuend, subtrahend);
 		result = checkExponentExtremum(result, 1024, -1075);
 		
 		return result;
 	}
 	
-	public static SlashedDouble innerSub(SlashedDouble minuend, SlashedDouble subtrahend) {
-		// because we want to hold SlashedDouble format with inner methods, 
+	/**
+	 * Returns the residual of inputs
+	 *
+	 * <p>You may use it to get an intermidiate {@code SlicedDouble} type
+	 * result that is not in limited to {@code double} range.
+	 *
+	 * <p>For example:<br>
+	 *
+	 * {@code SlicedDouble dividend = new SlicedDouble(345.34);}<br>
+	 * {@code SlicedDouble divisor = new SlicedDouble(23.53);}<br>
+	 * {@code SlicedDouble floordiv = MiniMath.innerDiv(dividend, divisor, "", 2).getIntSD();}<br>
+	 * {@code SlicedDouble innermult = MiniMath.innerMult(floordiv, divisor, floordiv.getNegativeSign());}<br>
+	 * {@code SlicedDouble innersub = MiniMath.innerSub(dividend, innermult);}
+	 *
+	 *
+	 * <p>That would be striclty as if you were using 
+	 * {@code MiniMath.floorMod(345.34, 23.53)} but in the true
+	 * {@code SlicedDouble} format.
+	 *
+	 * @param minuend 		the minuend
+	 * @param subtrahend 	the subtrahend
+	 * @return the residual
+	 */
+	public static SlicedDouble innerSub(SlicedDouble minuend, SlicedDouble subtrahend) {
+		if (minuend.getDouble() != null && Double.isNaN(minuend.getDouble()))
+			return minuend;
+		else if (subtrahend.getDouble() != null && Double.isNaN(subtrahend.getDouble()))
+			return subtrahend;
+		
+		// because we want to hold SlicedDouble format with inner methods, 
 		// we must to keep raw format as it is, and do not evaluate double value
 		// cause it may not exist for this time (if we calling .getDouble(),
 		// or if we call .getIEEE754() it may brings current object to unwanted mutation
 		if (minuend.getBinaryRaw().length() == 0) {
 			if (subtrahend.getBinaryRaw().length() > 0) {
-				SlashedDouble subclone = subtrahend.clone();
+				SlicedDouble subclone = subtrahend.clone();
 				subclone.reverseSign();
 				return subclone;
 			} else return minuend;
@@ -1112,12 +1510,12 @@ public class MiniMath {
 		if (subtrahend.getBinaryRaw().length() == 0) return minuend;
 		
 		if ((!minuend.isNegative() && subtrahend.isNegative())) {
-			SlashedDouble number2 = subtrahend.clone();
+			SlicedDouble number2 = subtrahend.clone();
 			number2.setSign("");
 			return innerSum(minuend, number2);
 		}
 		if (minuend.isNegative() && !subtrahend.isNegative()) {
-			SlashedDouble number2 = subtrahend.clone();
+			SlicedDouble number2 = subtrahend.clone();
 			number2.setSign("-");
 			return innerSum(minuend, number2);
 		}
@@ -1167,9 +1565,12 @@ public class MiniMath {
 		String residualstr = Long.toBinaryString(residual);
 		int resultexp = getSubstractionExponent(residualstr, minexp, subexp, minraw);
 		
-		return new SlashedDouble(residualstr, resultexp, negativesign);
+		return new SlicedDouble(residualstr, resultexp, negativesign);
 	}
 	
+	/**
+	 * Auxiliary method to get residual exponent
+	 */
 	private static int getSubstractionExponent(String residualstr, int minexp, int subexp, String minraw) {
 		if (residualstr.indexOf('1') == 0xffffffff) return 0;
 		if (minraw.indexOf('1') == 0xffffffff) return subexp;
@@ -1177,20 +1578,41 @@ public class MiniMath {
 		return minexp + ~(minraw.length() + ~residualstr.length() + 1) + 1;
 	}
 	
+	/**
+	 * Returns the sum
+	 *
+	 * @param number1 the addendum1
+	 * @param number2 the addendum2
+	 * @return sum
+	 */
 	public static Double sum(double number1, double number2) {
-		return sum(new SlashedDouble(number1), new SlashedDouble(number2)).getIEEE754();
+		return sum(new SlicedDouble(number1), new SlicedDouble(number2)).getIEEE754();
 	}
 	
-	public static SlashedDouble sum(SlashedDouble number1, SlashedDouble number2) {
+	/**
+	 * Returns the sum
+	 *
+	 * <p><b>Important.</b>
+	 * <p>This method works directly with {@code SlicedDouble} type of inputs.
+	 * If the arguments are not holding compilated {@code double} numbers
+	 * them will be computed, so if you do not wish to lose advantages of
+	 * using {@code SlicedDouble} type, you should not use this method.
+	 * Instead you may use {@code innerSum()}:
+	 *
+	 * @param number1 the addendum1
+	 * @param number2 the addendum2
+	 * @return sum
+	 */
+	public static SlicedDouble sum(SlicedDouble number1, SlicedDouble number2) {
 		double dblnumber1 = number1.getDouble(), dblnumber2 = number2.getDouble();
 		
 		if (Double.isNaN(dblnumber1) || Double.isNaN(dblnumber2))
-			return new SlashedDouble(Double.NaN);
+			return new SlicedDouble(Double.NaN);
 		if (dblnumber1 == Double.POSITIVE_INFINITY) {
-			if (dblnumber2 == Double.NEGATIVE_INFINITY) return new SlashedDouble(Double.NaN);
+			if (dblnumber2 == Double.NEGATIVE_INFINITY) return new SlicedDouble(Double.NaN);
 			else return number1;
 		} else if (dblnumber1 == Double.NEGATIVE_INFINITY) {
-			if (dblnumber2 == Double.POSITIVE_INFINITY) return new SlashedDouble(Double.NaN);
+			if (dblnumber2 == Double.POSITIVE_INFINITY) return new SlicedDouble(Double.NaN);
 			else return number1;
 		} else if (dblnumber2 == Double.POSITIVE_INFINITY || 
 			dblnumber2 == Double.NEGATIVE_INFINITY) 
@@ -1199,10 +1621,22 @@ public class MiniMath {
 		return innerSum(number1, number2);
 	}
 	
-	public static SlashedDouble innerSum(SlashedDouble number1, SlashedDouble number2) {
+	/**
+	 * Returns the sum without pre and post compilations to {@code double} type
+	 *
+	 * @param number1 the addendum1
+	 * @param number2 the addendum2
+	 * @return sum
+	 */
+	public static SlicedDouble innerSum(SlicedDouble number1, SlicedDouble number2) {
+		if (number1.getDouble() != null && Double.isNaN(number1.getDouble()))
+			return number1;
+		else if (number2.getDouble() != null && Double.isNaN(number2.getDouble()))
+			return number2;
+		
 		if (number1.getBinaryRaw().length() == 0) {
 			if (number2.getBinaryRaw().length() == 0 && number2.isNegative()) {
-				SlashedDouble num2clone = number2.clone();
+				SlicedDouble num2clone = number2.clone();
 				number2.setSign("");
 				return number2;
 			}	
@@ -1210,12 +1644,12 @@ public class MiniMath {
 		} else if (number2.getBinaryRaw().length() == 0) return number1;
 		
 		if (!number1.isNegative() && number2.isNegative()) {
-			SlashedDouble subtrahend = number2.clone();
+			SlicedDouble subtrahend = number2.clone();
 			subtrahend.setSign("");
 			return innerSub(number1, subtrahend);
 		}
 		if (number1.isNegative() && !number2.isNegative()) {
-			SlashedDouble subtrahend = number1.clone();
+			SlicedDouble subtrahend = number1.clone();
 			subtrahend.setSign("");
 			return innerSub(number2, subtrahend);
 		} 
@@ -1268,10 +1702,11 @@ public class MiniMath {
 			num1exp++;
 		}
 
-		return new SlashedDouble(sumstr, num1exp, negativesign);
+		return new SlicedDouble(sumstr, num1exp, negativesign);
 	}
 	
 	public static void main(String[] args) {
+		//SlicedDouble sd = new SlicedDouble(0l, 0, null);
 		//testSum();
 		//testSubstraction();
 		//testDivision();
@@ -1282,9 +1717,13 @@ public class MiniMath {
 		//testCeil();
 		//testFloor();
 		//testPowInteger();
-		testPow();
+		//testPow();
+		
 	}
 	
+	/**
+	 * Test of pow method
+	 */
 	public static void testPow() {
 		double factor1 = 100000000000000000000000000000000000000000.0, factor2;
 		int counter = 0;
@@ -1316,6 +1755,9 @@ public class MiniMath {
 		out.println(counter + " results in real number powers test that have missed accuracy");
 	}
 	
+	/**
+	 * Test of pow method with integer powers
+	 */
 	public static void testPowInteger() {
 		double factor1 = 100000000000000000000000000000000000000000.0, factor2;
 		int counter = 0;
@@ -1347,6 +1789,9 @@ public class MiniMath {
 		out.println(counter + " results in integer number powers test that have missed accuracy");
 	}
 	
+	/**
+	 * Test of summing
+	 */
 	public static void testSum() {
 		double factor1 = 1.0E308, factor2;
 		int counter = 0;
@@ -1378,6 +1823,9 @@ public class MiniMath {
 		out.println(counter + " results in summing test that have missed accuracy");
 	}
 	
+	/**
+	 * Test of substraction
+	 */
 	public static void testSubstraction() {
 		double factor1 = 1.0E308, factor2;
 		int counter = 0;
@@ -1409,6 +1857,9 @@ public class MiniMath {
 		out.println(counter + " results in substraction test that have missed accuracy");
 	}
 	
+	/**
+	 * Test of division
+	 */
 	public static void testDivision() {
 		double factor1 = 1.0E308, factor2;
 		int counter = 0;
@@ -1439,6 +1890,9 @@ public class MiniMath {
 		out.println(counter + " results in full division test have missed accuracy");
 	}
 	
+	/**
+	 * Test of integer division
+	 */
 	public static void testIntegerDivision() {
 		double factor1 = 2100000000, factor2;
 		int counter = 0;
@@ -1471,6 +1925,9 @@ public class MiniMath {
 		out.println(counter + " results in integer division test have missed accuracy");
 	}
 	
+	/**
+	 * Test of floor integer division
+	 */
 	public static void testIntegerFloorDivision() {
 		double factor1 = 2100000000, factor2;
 		int counter = 0;
@@ -1503,6 +1960,9 @@ public class MiniMath {
 		out.println(counter + " results in integer floor division test have missed accuracy");
 	}
 	
+	/**
+	 * Test of division remainder extracting
+	 */
 	public static void testRemainderOfDivision() {
 		double factor1 = 2100000000, factor2;
 		int counter = 0;
@@ -1535,6 +1995,9 @@ public class MiniMath {
 		out.println(counter + " results in getting remainder of integer division test have missed accuracy");
 	}
 	
+	/**
+	 * Test of floor modulus obtaining
+	 */
 	public static void testFloorModulus() {
 		double factor1 = 2100000000, factor2;
 		int counter = 0;
@@ -1567,6 +2030,9 @@ public class MiniMath {
 		out.println(counter + " results in getting floor modulus of integer division test have missed accuracy");
 	}
 	
+	/**
+	 * Test of intger floor obtaining
+	 */
 	public static void testFloor() {
 		double factor1 = 1.0E308;
 		int counter = 0;
@@ -1591,6 +2057,9 @@ public class MiniMath {
 		out.println(counter + " results in floor test have missed accuracy");
 	}
 	
+	/**
+	 * Test of integer ceil obtaining
+	 */
 	public static void testCeil() {
 		double factor1 = 1.0E308;
 		int counter = 0;
@@ -1616,18 +2085,19 @@ public class MiniMath {
 	}
 		
 		
-	/*
+	
 	// In spite of that it do a rounding like it assumed in the standart
 	// due to only 64 bits availible it returns a rounding that is less
-	// accurate that a simple one that presents in SlashedDouble
+	// accurate that a simple one that presents in SlicedDouble
 	// service method getRoundedRawBin(). It is not deleted for now
 	// because of possibility to adding additional accuracy in the
 	// future (if there be extra number that would be holding some extra bits).
-	private static double roundResult(SlashedDouble number) throws NullPointerException {
+	/*
+	private static double roundResult(SlicedDouble number) throws NullPointerException {
 		String raw = number.getBinaryRaw();
 		if (raw == null || raw.length() < 54) return number.getIEEE754();
 		
-		SlashedDouble a = new SlashedDouble(raw.substring(0, 53), number.getExp(), "");
+		SlicedDouble a = new SlicedDouble(raw.substring(0, 53), number.getExp(), "");
 		long longraw = Long.parseUnsignedLong(raw.substring(0, 53), 2);
 		longraw++;
 		String longb = Long.toBinaryString(longraw);
@@ -1637,9 +2107,9 @@ public class MiniMath {
 			expb++;
 		}
 		
-		SlashedDouble b = new SlashedDouble(longb, expb, "");
-		SlashedDouble square = innerMult(number, number, "");
-		SlashedDouble product = innerMult(a, b, "");
+		SlicedDouble b = new SlicedDouble(longb, expb, "");
+		SlicedDouble square = innerMult(number, number, "");
+		SlicedDouble product = innerMult(a, b, "");
 		String rawsquare = square.getBinaryRaw();
 		String rawproduct = product.getBinaryRaw();
 		
