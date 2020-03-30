@@ -137,8 +137,6 @@ public class SlicedDouble implements Cloneable {
 		
 		if (negativesign == null || negativesign.isEmpty()) this.negativesign = "";
 		else this.negativesign = "-";
-		
-		checkRaw();
 	}
 	
 	/**
@@ -164,8 +162,6 @@ public class SlicedDouble implements Cloneable {
 		
 		if (negativesign == null || negativesign.isEmpty()) this.negativesign = "";
 		else this.negativesign = "-";
-		
-		checkRaw();
 	}
 	
 	/**
@@ -188,27 +184,9 @@ public class SlicedDouble implements Cloneable {
 		this.ieee754hex = ieee754hex;
 	}
 	
-	private void checkRaw() {
-		if (raw.equals("1111111111111111111111111111111111111111111111111111111111111111")) {
-			raw = "1";
-			exp++;
-		}
-	}
-	
-	public static String parseRaw(String raw) {
-		if (raw.equals(null)) return "";
-		
-		Pattern p = Pattern.compile("(?<=0{0,}+)[01]{0,64}");
-		Matcher m = p.matcher(raw);
-		m.find();
-
-		return m.group();
-	}
-	
-	public static String parseRaw(String raw, int start, int end) {
-		return parseRaw(raw.substring(start, end));
-	}
-	
+	/**
+	 * Auxiliary method to slice the input to the constructor {@code double} number.
+	 */
 	private void sliceIt() {
 		String[] stripes = Double.toHexString(number).split("[.p]");
 		
@@ -234,7 +212,54 @@ public class SlicedDouble implements Cloneable {
 		}
 	}
 	
-	private static String fromHexToBinary(String hexraw) {
+	/**
+ 	 * Returns substring of a giving {@code Srting} that contians
+	 * binary number maximum length of 64. Number is parsed
+	 * in the {@code String} raw and leading zeros are omitting.
+	 * If null is supplied as argument, or if in the argument there is no
+	 * valid binary string, than it returns empty string.
+	 *
+	 * @param raw the {@code String} containg bianry raw
+	 * @return binary number in the {@code String} form or empty {@code String}.
+	 */
+	public static String parseRaw(String raw) {
+		if (raw.equals(null)) return "";
+		
+		Pattern p = Pattern.compile("(?<=0{0,}+)[01]{0,64}");
+		Matcher m = p.matcher(raw);
+		m.find();
+
+		return m.group();
+	}
+	
+	/**
+ 	 * Returns substring of a giving {@code Srting} that contians
+	 * binary number maximum length of 64. Number is parsed
+	 * in the {@code String} raw,  beginning at the specified beginIndex
+	 * and extending to endIndex - 1. Leading zeros are omitting in the result.
+	 * If null is supplied as argument, or if in the argument there is no
+	 * valid binary string, than it returns empty string.
+	 *
+	 * @param raw 	the {@code String} containg bianry raw
+	 * @param start the begining index, inclusive
+	 * @param end	the ending index, exclusive
+	 * @return binary number in the {@code String} form or empty {@code String}.
+	 */
+	public static String parseRaw(String raw, int start, int end) {
+		return parseRaw(raw.substring(start, end));
+	}
+	
+	/**
+	 * Returns binary representation of the hexadecimal input {@code String}.
+	 * If null or empty {@code String} is supplied that result is
+	 * empty {@code String}.
+	 *
+	 * @param hexraw the hexadecimal {@code String}
+	 * @return the binary representation of input.
+	 */
+	public static String fromHexToBinary(String hexraw) {
+		if (hexraw == null) return "";
+		
 		String raw = "";
 		
 		for (int i = 0; i < hexraw.length(); i++) {
@@ -263,7 +288,21 @@ public class SlicedDouble implements Cloneable {
 		return raw;
 	}
 	
+	/**
+	 * Returns hexadecimal representation of input binary {@code String}.
+	 * It return empty string if argument is null, and "0" if argument
+	 * is empty {@code String}.
+	 *
+	 * <p>If {@code raw.length() % 4 != 0} than additional zeros will be added.<br>
+	 * For example:<br>
+	 * {@code raw.equals("011011")} as input than it will be considered as 
+	 * {@code raw.equals("01101100")} and the output will be "6c"
+	 * 
+	 * @param raw the binary {@code String}
+	 * @return the hexadecimal representation of input
+	 */
 	public static String fromBinaryToHex(String raw) {
+		if (raw == null) return "";
 		if (raw.equals("")) return "0";
 		
 		String hexraw = "", digit;
@@ -300,7 +339,21 @@ public class SlicedDouble implements Cloneable {
 		return hexraw;
 	}
 	
+	/**
+	 * Returns raw {@code String} without trailing zeros. But from the nature
+	 * of how it works internally - if supplied raw {@code String} would not
+	 * have any '1' - the result will be empty string, likewise if the input
+	 * is null.
+	 *
+	 * <p>For example:<br>
+	 * {@code raw.equals("0011110")} will return {@code raw.equals("001111")}.
+	 *
+	 * @param raw the binary {@code String}
+	 * @return the raw without trailing zeros
+	 */
 	public static String cutFractTail(String raw) {
+		if (raw == null) return "";
+		
 		for (int i = raw.length() + 0xffffffff; i > 0xffffffff; i += 0xffffffff) {
 			if (raw.charAt(i) == '1') {
 				return raw.substring(0, i+1);
@@ -310,6 +363,11 @@ public class SlicedDouble implements Cloneable {
 		return "";
 	}
 	
+	/**
+	 * Returns the long representation of raw {@code String} that contain instance.
+	 *
+	 * @return the raw of instance in the long view
+	 */
 	public Long getLongRaw() {
 		if (longraw == null) {
 			if (raw.isEmpty()) longraw = 0l;
@@ -319,23 +377,54 @@ public class SlicedDouble implements Cloneable {
 		return longraw;
 	}
 	
+	/**
+	 * Returns current exponent of instance (null if it undefined)
+	 * - for Double.NaN, Double.POSITIVE_INFINITY, Double.NEGATIVE_INFINITY)
+	 *
+	 * @return the exponent of instance
+	 */
 	public Integer getExp() {
 		return exp;
 	}
 	
+	/**
+	 * Returns mantissa is {@code String} view
+	 *
+	 * @return the mantissa
+	 */
 	public String getBinaryRaw() {
 		return raw;
 	}
 	
+	/**
+	 * Returns the {@code String} that contains hexadecimal mantissa 
+	 * representation that was rounded according to {@code double} format.
+	 *
+	 * <p><b>Attention:</b> this method may imply some mutation on the
+	 * internal raw {@code String}, in accordance with {@code double} format
+	 * transcription. So you should use carefully.
+	 *
+	 * @return the rounded hexadecimal mantissa
+	 */
 	public String getRoundedRawHex() {
 		if (roundedrawhex == null) {
-			roundedrawhex = fromBinaryToHex(roundedrawbin);
+			roundedrawhex = fromBinaryToHex(getRoundedRawBin());
 		}
 		
 		return roundedrawhex;
 	}
-		
-	private String getRoundedRawBin() {
+	
+	/**
+	 * Returns the {@code String} that contains binary mantissa 
+	 * representation that was rounded according to {@code double} format.
+	 *
+	 * <p><b>Attention:</b> this method may imply some mutation on the
+	 * internal raw {@code String}, in accordance with {@code double} format
+	 * transcription. So you should use carefully.
+	 *
+	 * @return the rounded binary mantissa
+	 */
+	public String getRoundedRawBin() {
 		if (roundedrawbin == null) {
 			
 			// These instructions supply additional accuracy
@@ -364,7 +453,30 @@ public class SlicedDouble implements Cloneable {
 		return roundedrawbin;
 	}
 	
+	/**
+	 * Returns full hexadecimal representation in {@code String} format
+	 * of valid {@code double} number.
+	 *
+	 * <p>There are three special cases:
+	 * <ul>
+	 *  <li>if {@code Double.isNaN(number) == true} returns "NaN"</li>
+	 *  <li>if {@code number == Double.POSITIVE_INFINITY} returns "Infinity"</li>
+	 *  <li>if {@code number == Double.NEGATIVE_INFINITY} returns "-Infinity"</li>
+	 * </ul>
+	 *
+	 * <p><b>Attention:</b> this method may imply some mutation on the
+	 * internal raw {@code String}, in accordance with {@code double} format
+	 * transcription. So you should use carefully.
+	 *
+	 * @return the hexadecimal representation of internal number.
+	 */
 	public String getDoubleHexRaw() {
+		if (number != null) {
+			if (Double.isNaN(number)) return "NaN";
+			else if (number == Double.POSITIVE_INFINITY) return "Infinity";
+			else if (number == Double.NEGATIVE_INFINITY) return "-Infinity";
+		}
+		
 		if (ieee754hex == null) {
 			
 			getRoundedRawBin();
@@ -380,6 +492,16 @@ public class SlicedDouble implements Cloneable {
 		return ieee754hex;
 	}
 	
+	/**
+	 * Computes and returns valid {@code double} number representation of
+	 * the current instance.
+	 *
+	 * <p><b>Attention:</b> this method may imply some mutation on the
+	 * internal raw {@code String}, in accordance with {@code double} format
+	 * transcription. So you should use carefully.
+	 *
+	 * @return the {@code double} number representation of the current instance
+	 */
 	public Double getIEEE754() {
 		if (number == null) {
 			number = Double.valueOf(getDoubleHexRaw());
@@ -387,7 +509,12 @@ public class SlicedDouble implements Cloneable {
 		
 		return number;	
 	}
-
+	
+	/**
+	 * Returns the sum of '1' in internal mantissa.
+	 *
+	 * @return the sum of '1' in internal mantissa
+	 */
 	public Integer onesEnum() {
 		if (onesnum == null) {
 			int counter = 0;
@@ -402,6 +529,16 @@ public class SlicedDouble implements Cloneable {
 		return onesnum;
 	}
 	
+	/**
+	 * Returns the integer part as a {@code String} of instance number.
+	 *
+	 * <p>Special cases:<br>
+	 * if {@code Double.isNaN(number) == true} or
+	 * if {@code number == Double.POSITIVE_INFINITY} or
+	 * if {@code number == Double.NEGATIVE_INFINITY} it will return null.
+	 *
+	 * @return the integer part as a {@code String} of instance number
+	 */
 	public String getIntRaw() {
 		if (intraw == null) {
 			if (exp != null) {
@@ -422,6 +559,19 @@ public class SlicedDouble implements Cloneable {
 		return intraw;
 	}
 	
+	/**
+	 * Returns the new SlicedDouble instance that is making from
+	 * integer part of instance number.
+	 *
+	 * <p>Special cases:<br>
+	 * if {@code Double.isNaN(number) == true} or
+	 * if {@code number == Double.POSITIVE_INFINITY} or
+	 * if {@code number == Double.NEGATIVE_INFINITY} it will return the same
+	 * instance.
+	 *
+	 * @return the new SlicedDouble instance that is making from
+	 * 			integer part of instance number
+	 */
 	public SlicedDouble getIntSD() {
 		if (intraw == null) getIntRaw();
 		
@@ -434,6 +584,18 @@ public class SlicedDouble implements Cloneable {
 		}
 	}
 	
+	/**
+	 * Returns the fractional part as a {@code String} of instance number.
+	 *
+	 * <p>Special cases:<br>
+	 * <ul>
+	 *  <li>if {@code Double.isNaN(number) == true} it will return null;</li>
+	 *  <li>if {@code number == Double.POSITIVE_INFINITY} or
+	 * if {@code number == Double.NEGATIVE_INFINITY} it will return empty {@code String}.</li>
+	 * </ul>
+	 *
+	 * @return the fractional part as a {@code String} of instance number
+	 */
 	public String getFractRaw() {
 		if (fractraw == null) {
 			if (exp != null) {
@@ -444,12 +606,31 @@ public class SlicedDouble implements Cloneable {
 				} else {
 					fractraw = "";
 				}
+			} else {
+				if (!Double.isNaN(number)) return "";
 			}
 		}
 		
 		return fractraw;
 	}
 	
+	/**
+	 * Returns the new SlicedDouble instance that is making from
+	 * integer part of instance number.
+	 *
+	 * <p>Special cases:<br>
+	 * <ul>
+	 *  <li>if {@code Double.isNaN(number) == true} it will return the same
+	 * instance.</li>
+	 *  <li>if {@code number == Double.POSITIVE_INFINITY} it will return instance
+	 * that will be holding an equivalent of "0.0"</li>
+	 *  <li>if {@code number == Double.NEGATIVE_INFINITY} it will return instance
+	 * that will be holding an equivalent of "-0.0"</li>
+	 * </ul>
+	 *
+	 * @return the new SlicedDouble instance that is making from
+	 * 			fractional part of instance number
+	 */
 	public SlicedDouble getFractSD() {
 		if (fractraw == null) getFractRaw();
 		
@@ -466,43 +647,90 @@ public class SlicedDouble implements Cloneable {
 		}
 	}
 	
-	
+	/**
+	 * Returns true if number of instance is negative.
+	 *
+	 * @return true if number of instance is negative
+	 */
 	public boolean isNegative() {
 		if (negativesign.equals("-")) return true;
 		else return false;
 	}
 	
+	/**
+	 * Returns internal {@code double} number without precompilation.
+	 * It is safe for use, as no mutation is applying. But if there is no
+	 * compilated number for now, than result would be null.
+	 *
+	 * @return the {@code double} number
+	 */
 	public Double getDouble() {
 		return number;
 	}
 	
+	/**
+	 * Returns the {@code String} representation number sign.
+	 *
+	 * @return the {@code String} representation number sign
+	 */
 	public String getNegativeSign() {
 		return negativesign;
 	}
 	
+	/**
+	 * Sets sign to the current instance. If {@code String} argument is not
+	 * empty, the sign would be negative, and positive in other case.
+	 *
+	 * @param sign the supplying sign to the number
+	 */
 	public void setSign(String sign) {
+		if (number != null && Double.isNaN(number)) return;
 		if (number != null && negativesign != sign) number = -number;
-		if (sign.equals("") || sign.equals("-")) negativesign = sign;
+		if (sign.isEmpty()) negativesign = "";
+		else negativesign = "-";
 	}
 	
+	/**
+	 * Reverses sign - is it was negative it become positive and vice versa.
+	 */
 	public void reverseSign() {
 		if (Double.isNaN(number)) return;
 		if (number != null) number = -number;
 		if (negativesign.isEmpty()) negativesign = "-";
 		else negativesign = "";
 	}
-
+	
+	/**
+	 * Returns true if the instance number is odd.
+	 *
+	 * @return true if the instance number is odd
+	 */
 	public boolean isOdd() {
 		if ((exp < raw.length() && raw.charAt(exp) == 0) || exp < 0 || exp >= raw.length())
 			return false;
 		return true;
 	}
 	
+	/**
+	 * Returns true if the digits num of instance raw mantissa  is odd.
+	 *
+	 * @return true if the digits num of instance raw mantissa  is odd.
+	 */
 	public boolean isOddIntDigitsNum() {
 		if ((exp & 1) == 0) return true;
 		else return false;
 	}
 	
+	/** 
+	 * Returns full binary representation in {@code String} format
+	 * of valid {@code double} number.
+	 *
+	 * <p><b>Attention:</b> this method may imply some mutation on the
+	 * internal raw {@code String}, in accordance with {@code double} format
+	 * transcription. So you should use carefully.
+	 *
+	 * @return the binary representation of internal number.
+	 */
 	public String getIEEE754Bin() {
 		if (ieee754bin == null) {
 			if (exp != null) {
@@ -555,6 +783,11 @@ public class SlicedDouble implements Cloneable {
 		return ieee754bin;	
 	}
 	
+	/**
+	 * Returns the deep cloned SlicedDouble instance.
+	 *
+	 * @return the deep cloned SlicedDouble instance
+	 */
 	public SlicedDouble clone() {
 		SlicedDouble sdnum = new SlicedDouble(this.number, this.negativesign, this.raw, 
 			this.longraw, this.intraw, this.fractraw, this.exp, this.onesnum, 

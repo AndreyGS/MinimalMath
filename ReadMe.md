@@ -45,7 +45,7 @@ There is a several working methods that may get an interest of some kind in Mini
 - *static Double pow(double number, double power)* - returns the value of the number raised to the giving power;
 - *static SlicedDouble pow(SlicedDouble number, SlicedDouble power)* - returns the SlicedDouble that hold value of the number that power holds raised to the giving power that sdpow holds;
 
-You are also may try to use some functionality of SlicedDouble objects - this have many public methods, but no documentation for them is included for now. All I can say, this class is made for slicing standart double value, than separately operating with its parts - an exponent, mantissa and sign - and finally put them all together in double again.
+You are also may try to use some functionality of SlicedDouble objects - this have many of the public methods.
 
 Also if you want to test accuracy of current functions there are several (11 for now) test methods.
 - *static void testSum();*
@@ -59,6 +59,8 @@ Also if you want to test accuracy of current functions there are several (11 for
 - *static void testFloor();*
 - *static void testPowInteger();*
 - *static void testPow();*
+
+The main Java documentation is supplied in source files.
 
 ## License
 

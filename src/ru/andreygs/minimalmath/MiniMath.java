@@ -1706,18 +1706,19 @@ public class MiniMath {
 	}
 	
 	public static void main(String[] args) {
+		out.println(Double.toHexString(Double.NEGATIVE_INFINITY));
 		//SlicedDouble sd = new SlicedDouble(0l, 0, null);
 		//testSum();
 		//testSubstraction();
 		//testDivision();
-		//testIntegerDivision();
-		//testIntegerFloorDivision();
-		//testRemainderOfDivision();
-		//testFloorModulus();
-		//testCeil();
-		//testFloor();
-		//testPowInteger();
-		//testPow();
+		testIntegerDivision();
+		testIntegerFloorDivision();
+		testRemainderOfDivision();
+		testFloorModulus();
+		testCeil();
+		testFloor();
+	    testPowInteger();
+		testPow();
 		
 	}
 	

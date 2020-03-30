@@ -1,5 +1,10 @@
 Hisory of changes
 
+30.03.2020
+1. Removed method .checkRaw() from SlicedDouble as it no more needed.
+2. Minor edits in several SlicedDouble methods.
+3. Documentation of SlicedDouble class is completed.
+
 29.03.2020
 1. SlashedDouble class was renamed to SlicedDouble.
 2. Added full Java documentation to all methods in MiniMath class.
