@@ -475,6 +475,12 @@ public class SlicedDouble implements Cloneable {
 			if (Double.isNaN(number)) return "NaN";
 			else if (number == Double.POSITIVE_INFINITY) return "Infinity";
 			else if (number == Double.NEGATIVE_INFINITY) return "-Infinity";
+		} else if (exp > 1023) {
+			if (negativesign.isEmpty()) return "Infinity";
+			else return "-Infinity";
+		} else if (exp < -1074) {
+			if (negativesign.isEmpty()) return "0.0";
+			else return "-0.0";
 		}
 		
 		if (ieee754hex == null) {

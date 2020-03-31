@@ -1166,17 +1166,14 @@ public class MiniMath {
 	 * <p>The featuresign parameter accept several different values:
 	 * <ul> 
 	 *	<li>if (featuresign == 0) - returns result of full division;</li>
-	 *	<li>if (featuresign == 1) - returns result of integer division;</li>
-	 *	<li>if (featuresign == 2) - returns result floor division;</li>
+	 *	<li>if (featuresign == 1) - returns result of integer division<br>
+	 *	(exmaple of use: 
+	 *	{@code SlicedDouble floordiv = MiniMath.innerDiv(dividend, divisor, "", 1).getIntSD();});</li>
+	 *	<li>if (featuresign == 2) - returns result floor division<br>
+	 *	(exmaple of use: 
+	 *	{@code SlicedDouble floordiv = MiniMath.innerDiv(dividend, divisor, "", 2).getIntSD();});</li>
 	 *	<li>if (featuresign == 3) - returns remainder of division;</li>
 	 * </ul>
-	 *
-	 * <p>This method is also may be used to get an intermidiate results
-	 * of {@code SlicedDouble} type. But aware to going over the limits
-	 * in case of using floorDiv or floorMod operations that may get
-	 * negative values. The result will be precalculated to valid
-	 * {@code Double} type. So here you may lose the advantages of
-	 * {@code SlicedDouble} type.
 	 *
 	 * @param dividend		the dividend number
 	 * @param divisor		the divisor number
@@ -1270,7 +1267,7 @@ public class MiniMath {
 			// if we perform floorDiv and result is negative and there is a remainder
 			// we need to handle it by substracion of -1 to the final result before returning it
 			if (featuresign == 2 && negativesign.length() > 0 
-				&& dividendraw.indexOf('1') > 0xffffffff) {
+				&& dividendraw.indexOf('1') > 0xffffffff && resultexp < 64) {
 				return new SlicedDouble(
 					new SlicedDouble(quotient, resultexp, negativesign)
 						.getIEEE754() + 0xffffffff);
@@ -1706,19 +1703,17 @@ public class MiniMath {
 	}
 	
 	public static void main(String[] args) {
-		out.println(Double.toHexString(Double.NEGATIVE_INFINITY));
-		//SlicedDouble sd = new SlicedDouble(0l, 0, null);
 		//testSum();
 		//testSubstraction();
 		//testDivision();
-		testIntegerDivision();
-		testIntegerFloorDivision();
-		testRemainderOfDivision();
-		testFloorModulus();
-		testCeil();
-		testFloor();
-	    testPowInteger();
-		testPow();
+		//testIntegerDivision();
+		//testIntegerFloorDivision();
+		//testRemainderOfDivision();
+		//testFloorModulus();
+		//testCeil();
+		//testFloor();
+	    //testPowInteger();
+		//testPow();
 		
 	}
 	

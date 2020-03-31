@@ -1,5 +1,9 @@
 Hisory of changes
 
+31.03.2020
+1. Method MiniMath.innerDiv() was updated.
+2. .getDoubleHexRaw() in the SlicedDouble class was updated.
+
 30.03.2020
 1. Removed method .checkRaw() from SlicedDouble as it no more needed.
 2. Minor edits in several SlicedDouble methods.

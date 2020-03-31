@@ -16,7 +16,7 @@ I can't really answer this question precisely. For self-education and in the mat
 
 ## How to use
 
-There is a several working methods that may get an interest of some kind in MiniMath class:
+The public methods from MiniMath class:
 
 - *static Double abs(double number)* - returns absolute value of a giving double number;
 - *static SlicedDouble abs(SlicedDouble number)* - returns SlicedDouble that holds absolute value of number that argument holds;
@@ -43,9 +43,22 @@ There is a several working methods that may get an interest of some kind in Mini
 - *static Double floorMod(double dividend, double divisor)* - returns the floor modulus of the inputed arguments;
 - *static SlicedDouble floorMod(SlicedDouble dividend, SlicedDouble divisor)* - returns the floor modulus of the values that holds inputed arguments;
 - *static Double pow(double number, double power)* - returns the value of the number raised to the giving power;
-- *static SlicedDouble pow(SlicedDouble number, SlicedDouble power)* - returns the SlicedDouble that hold value of the number that power holds raised to the giving power that sdpow holds;
+- *static SlicedDouble pow(SlicedDouble number, SlicedDouble power)* - returns the SlicedDouble that hold value of the number that power holds raised to the giving power that sdpow holds.
 
-Also if you want to test accuracy of current functions there are several (11 for now) test methods.
+
+Last few methods are using to get intermidiate results with no conversion and respective limititations of double type:
+
+- *public static SlicedDouble innerSum(SlicedDouble number1, SlicedDouble number2)* - returns the sum;
+- *public static SlicedDouble innerSub(SlicedDouble minuend, SlicedDouble subtrahend)* - substraction;
+- *static SlicedDouble intPowerNoLimits(SlicedDouble number, SlicedDouble power)* - returns result of raising number to the integer part of the giving power;
+- *public static SlicedDouble fractPower(SlicedDouble number, SlicedDouble power)* - returns result of raising number to the fractional part of the giving power;
+- *public static SlicedDouble innerRoot(SlicedDouble number)* - returns the square root of the giving number;
+- *public static SlicedDouble innerMult(SlicedDouble number1, SlicedDouble number2, String negativesign)* - makes a division;
+- *public static SlicedDouble innerDiv(SlicedDouble dividend, SlicedDouble divisor, String negativesign, int featuresign)* - returns result of the division or integer division or floor division or remainder of the division. The concrete result depends on the feature sign .
+
+
+Also if you want to test accuracy of abovementioned functions you may use these one:
+
 - *static void testSum();*
 - *static void testSubstraction();*
 - *static void testDivision();*
@@ -57,6 +70,7 @@ Also if you want to test accuracy of current functions there are several (11 for
 - *static void testFloor();*
 - *static void testPowInteger();*
 - *static void testPow();*
+
 
 Finally you may try to use some functionality of SlicedDouble objects - these have many of the public methods.
 
