@@ -478,16 +478,13 @@ public class SlicedDouble implements Cloneable {
 		} else if (exp > 1023) {
 			if (negativesign.isEmpty()) return "Infinity";
 			else return "-Infinity";
-		} else if (exp < -1074) {
-			if (negativesign.isEmpty()) return "0.0";
-			else return "-0.0";
 		}
 		
 		if (ieee754hex == null) {
 			
 			getRoundedRawBin();
 			
-			if ((raw.indexOf('1') == 0xffffffff) && (exp == 0 || exp  < 0xfffffbce)) {
+			if ((raw.indexOf('1') == 0xffffffff && exp == 0) || exp  < 0xfffffbce) {
 				// if it's '0' or below minimum
 				ieee754hex = negativesign + "0x0.0p0";
 			} else {	
