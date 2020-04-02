@@ -1238,7 +1238,7 @@ public class MiniMath {
 			initialzero = 1;
 		}
 		
-		// following steps will produce rest of result
+		// following steps will produce the rest of the result
 		for (int left = 0, right = divisorlen+1; left < stepnum; left++, right++) {
 			minuend = Long.parseUnsignedLong(dividendraw.substring(0, right), 2);
 			residual = minuend + ~divisorlong + 1;
@@ -1264,10 +1264,10 @@ public class MiniMath {
 		}
 		
 		if (featuresign < 3) {
-			// if we perform floorDiv and result is negative and there is a remainder
+			// if we perform floorDiv and the result is negative and there is a remainder
 			// we need to handle it by substracion of -1 to the final result before returning it
-			if (featuresign == 2 && negativesign.length() > 0 
-				&& dividendraw.indexOf('1') > 0xffffffff && resultexp < 64) {
+			if (featuresign == 2 && negativesign.length() > 0 && resultexp < 53 && 
+				dividendraw.indexOf('1') > 0xffffffff) {
 				return new SlicedDouble(
 					new SlicedDouble(quotient, resultexp, negativesign)
 						.getIEEE754() + 0xffffffff);

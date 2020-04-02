@@ -481,13 +481,11 @@ public class SlicedDouble implements Cloneable {
 		}
 		
 		if (ieee754hex == null) {
-			
-			getRoundedRawBin();
-			
 			if ((raw.indexOf('1') == 0xffffffff && exp == 0) || exp  < 0xfffffbce) {
 				// if it's '0' or below minimum
 				ieee754hex = negativesign + "0x0.0p0";
-			} else {	
+			} else {
+				getRoundedRawBin();
 				ieee754hex = negativesign + "0x1." + getRoundedRawHex() + "p" + exp;
 			}
 		}

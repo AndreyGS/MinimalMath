@@ -46,7 +46,7 @@ The public methods from MiniMath class:
 - *static SlicedDouble pow(SlicedDouble number, SlicedDouble power)* - returns the SlicedDouble that hold value of the number that power holds raised to the giving power that sdpow holds.
 
 
-Last few methods are using to get intermidiate results with no conversion and respective limititations of double type:
+Next few methods are using to get the intermidiate results with no conversion and respective limititations of the double type:
 
 - *public static SlicedDouble innerSum(SlicedDouble number1, SlicedDouble number2)* - returns the sum;
 - *public static SlicedDouble innerSub(SlicedDouble minuend, SlicedDouble subtrahend)* - substraction;
@@ -57,7 +57,7 @@ Last few methods are using to get intermidiate results with no conversion and re
 - *public static SlicedDouble innerDiv(SlicedDouble dividend, SlicedDouble divisor, String negativesign, int featuresign)* - returns result of the division or integer division or floor division or remainder of the division. The concrete result depends on the feature sign .
 
 
-Also if you want to test accuracy of abovementioned functions you may use these one:
+Also, if you want to test accuracy of abovementioned functions you may use these:
 
 - *static void testSum();*
 - *static void testSubstraction();*
