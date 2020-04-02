@@ -1703,6 +1703,12 @@ public class MiniMath {
 	}
 	
 	public static void main(String[] args) {
+		//-2.7973453643371784E-18!
+//8.65966101108157E305
+//-0.0
+//-4.9E-324
+		
+		//out.println(division(-2.7973453643371784E-18, 8.65966101108157E305));
 		//testSum();
 		//testSubstraction();
 		//testDivision();

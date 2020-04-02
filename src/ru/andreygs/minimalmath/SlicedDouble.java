@@ -479,9 +479,9 @@ public class SlicedDouble implements Cloneable {
 			if (negativesign.isEmpty()) return "Infinity";
 			else return "-Infinity";
 		}
-		
+
 		if (ieee754hex == null) {
-			if ((raw.indexOf('1') == 0xffffffff && exp == 0) || exp  < 0xfffffbce) {
+			if ((raw.indexOf('1') == 0xffffffff && exp == 0) || exp  < 0xfffffbcd) {
 				// if it's '0' or below minimum
 				ieee754hex = negativesign + "0x0.0p0";
 			} else {

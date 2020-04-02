@@ -1,5 +1,9 @@
 Hisory of changes
 
+02.04.2020
+1. Fixed unsuspected bug in getDoubleHexRaw() that was lead to incorrect rounding with numbers that have -1075 exponent.
+2. Fixed some typos.
+
 31.03.2020
 1. Method MiniMath.innerDiv() was updated.
 2. .getDoubleHexRaw() in the SlicedDouble class was updated.
