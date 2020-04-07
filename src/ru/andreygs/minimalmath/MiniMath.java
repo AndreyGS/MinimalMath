@@ -605,10 +605,17 @@ public class MiniMath {
 		String numraw = number.getBinaryRaw(), residualstr;
 		long minuend = 0l, subtrahend, residual;
 		if (!number.isOddIntDigitsNum()) {
-			if (numraw.substring(0, 2).equals("10")) {
-				numraw = "01" + numraw.substring(2);
+			if (number.getIntRaw().length() > 0 || 
+				(number.getIntRaw().length() == 0 && number.getFractRaw().length() > 1)) {
+				if (numraw.substring(0, 2).equals("10")) {
+					numraw = "01" + numraw.substring(2);
+				} else {
+					numraw = "10" + numraw.substring(2);
+				}
+			} else if (number.getFractRaw().length() == 1) {
+				numraw = "01";
 			} else {
-				numraw = "10" + numraw.substring(2);
+				return new SlicedDouble("", 0, "");
 			}
 		} else {
 			numraw = "00" + numraw.substring(1);
@@ -1703,12 +1710,6 @@ public class MiniMath {
 	}
 	
 	public static void main(String[] args) {
-		//-2.7973453643371784E-18!
-//8.65966101108157E305
-//-0.0
-//-4.9E-324
-		
-		//out.println(division(-2.7973453643371784E-18, 8.65966101108157E305));
 		//testSum();
 		//testSubstraction();
 		//testDivision();
@@ -1720,7 +1721,6 @@ public class MiniMath {
 		//testFloor();
 	    //testPowInteger();
 		//testPow();
-		
 	}
 	
 	/**

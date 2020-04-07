@@ -1,5 +1,9 @@
 Hisory of changes
 
+07.04.2020
+1. Fixed bug in the MiniMath.innerRoot() that was lead to error in two special cases.
+2. Fixed issue in SlicedDouble instance method isOddIntDigitsNum() that returned incorrect results sometimes when exponent was less than one.
+
 02.04.2020
 1. Fixed unsuspected bug in getDoubleHexRaw() that was lead to incorrect rounding with numbers that have -1075 exponent.
 2. Fixed some typos.
@@ -68,7 +72,7 @@ Hisory of changes
 
 22.03.2020
 1. Method roundResult() in MiniMath class was upgraded to holding some unusual vaules, but it's still have worse accuracy against simplified rounding version in getRoundedRaw() method of SlashedDouble.
-2. Method isOddIntDigitsNum() and this is simplified respective condition instruction in innerRoot() method.
+2. Method isOddIntDigitsNum() and this is simplified respective condition expression in innerRoot() method.
 3. isOdd() method was changed in sense of to cutoff intraw variable reminding.
 4. mult() and pow() methods received overloading methods with SlashedDouble incoming.
 5. getIntegerIntRaw(), getLongIntRaw were turned off for the reason of implementing new logic in both availible classes.
@@ -77,7 +81,7 @@ Hisory of changes
 
 
 20.03.2020
-1. Fixed bug in mathematical integer and fraction parts of number calculating in getIntRaw() and getFractRaw() methods, by replacing a few instructions in three SlashedDouble constructors.
+1. Fixed bug in mathematical integer and fraction parts of number calculating in getIntRaw() and getFractRaw() methods, by replacing a few statements in three SlashedDouble constructors.
 2. Added roundResult() method to MiniMath class. It implements scaled rounding that applicates in double-precision rounding. It works correctly, but because of lack of availible digits at some stage it cannot calculate correctly needed number. What is more intresting is that getRoundedRaw() method in the SlashedDouble class, which produce a pretty simple rounding based on the value of the first cutting character, is much accurate and gives up to 1.5-2 times less missed values in the case of 14 digits after decimal point. I will keep this (roundResult()) method, but will not be use it for now.
 3. Fixed bug with mathematical integer part - to resolve it, I had to refused from integer type for integral degrees in favor of long type.
 4. Fixed bug with extra big powers handling.
@@ -98,7 +102,7 @@ Hisory of changes
 18.03.2020
 1. Finded issue in taking root processing. Succefully resolved.
 2. Testing method changed. Now it more accurate.
-3. MiniMath.innerMult(SlashedDouble number1, SlashedDouble number2) method received additional rounding instructions.
+3. MiniMath.innerMult(SlashedDouble number1, SlashedDouble number2) method received additional rounding statements.
 4. Fixed issue in calculating negative root exponent.
 5. Fixed issue of rounding numbers around 1.0 (there was an overflow in MiniMath.innerMult() when number was almost full of 'ones').
 6. Fixed several other issues with holding extra small and extra large numbers.

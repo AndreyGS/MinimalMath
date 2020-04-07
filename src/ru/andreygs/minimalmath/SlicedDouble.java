@@ -718,7 +718,7 @@ public class SlicedDouble implements Cloneable {
 	 * @return true if the digits num of instance raw mantissa  is odd.
 	 */
 	public boolean isOddIntDigitsNum() {
-		if ((exp & 1) == 0) return true;
+		if ((exp & 1) == 0 && getIntRaw().length() > 0) return true;
 		else return false;
 	}
 	
