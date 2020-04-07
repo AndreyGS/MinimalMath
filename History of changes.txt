@@ -3,6 +3,7 @@ Hisory of changes
 07.04.2020
 1. Fixed bug in the MiniMath.innerRoot() that was lead to error in two special cases.
 2. Fixed issue in SlicedDouble instance method isOddIntDigitsNum() that returned incorrect results sometimes when exponent was less than one.
+3. isOddIntDigitsNum() was modified again and was renamed to isOddIntDigitsOrLeadZerosNum() to be more precise to what it's actully doing. Java documentation was updated respectively.
 
 02.04.2020
 1. Fixed unsuspected bug in getDoubleHexRaw() that was lead to incorrect rounding with numbers that have -1075 exponent.

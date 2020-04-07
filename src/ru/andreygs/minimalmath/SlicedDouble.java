@@ -713,12 +713,19 @@ public class SlicedDouble implements Cloneable {
 	}
 	
 	/**
-	 * Returns true if the digits num of instance raw mantissa  is odd.
+	 * Returns true if digits num in integer part of instance raw is odd or if
+	 * abs(number) is less than 1 and leading zeros before first
+	 * binary 1 is odd number.
 	 *
-	 * @return true if the digits num of instance raw mantissa  is odd.
+	 * <p>This is first of all the auxiliary method that is using by MiniMath.innerRoot()
+	 * method.
+	 *
+	 * @return true if digits num in integer part of instance raw is odd or if
+	 * abs(number) is less than 1 and leading zeros before first
+	 * binary 1 is odd number.
 	 */
-	public boolean isOddIntDigitsNum() {
-		if ((exp & 1) == 0 && getIntRaw().length() > 0) return true;
+	public boolean isOddIntDigitsOrLeadZerosNum() {
+		if ((exp & 1) == 0 && raw.length() != 0) return true;
 		else return false;
 	}
 	

@@ -604,7 +604,7 @@ public class MiniMath {
 		
 		String numraw = number.getBinaryRaw(), residualstr;
 		long minuend = 0l, subtrahend, residual;
-		if (!number.isOddIntDigitsNum()) {
+		if (!number.isOddIntDigitsOrLeadZerosNum()) {
 			if (number.getIntRaw().length() > 0 || 
 				(number.getIntRaw().length() == 0 && number.getFractRaw().length() > 1)) {
 				if (numraw.substring(0, 2).equals("10")) {
