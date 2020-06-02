@@ -157,9 +157,9 @@ public class SlicedDouble implements Cloneable {
 	 */
 	public SlicedDouble(String raw, int exp, String negativesign) {
 		this.raw = cutFractTail(parseRaw(raw));
-		this.exp = exp;
 		if (this.raw.isEmpty()) this.exp = 0;
-		
+		else this.exp = exp;
+        
 		if (negativesign == null || negativesign.isEmpty()) this.negativesign = "";
 		else this.negativesign = "-";
 	}
@@ -434,7 +434,8 @@ public class SlicedDouble implements Cloneable {
 			// reach up to 10-20 times less, relatively of when these instructions are off
 			//if (raw.length() > 53 && (raw.indexOf('0') > 52 || raw.indexOf('0') == 0xffffffff)) {
 			if (raw.length() > 53 && raw.charAt(53) == '1') {
-				if (raw.indexOf('0') > 53 || raw.indexOf('0') == 0xffffffff) {
+                int i = raw.indexOf('0');
+				if (i > 53 || i == 0xffffffff) {
 					exp++;
 					roundedrawbin = "";
 					raw = "1";

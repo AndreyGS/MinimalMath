@@ -1,4 +1,16 @@
-Hisory of changes
+Hisory of changes:
+01.06.2020
+1. Added MiniMath.Test interface.
+2. Updated main of MiniMath and all test methods to handle new execution model of tests.
+
+21.05.2020
+1. Upgraded main algorithm of innerMult.
+2. Added testMult and getDPseudoRandom methods.
+
+17.05.2020
+1. Corrected some typos in variable in innerMult function.
+2. Removed unused statement in innerMult.
+3. In innerMult Replaced variable test definition.
 
 07.04.2020
 1. Fixed bug in the MiniMath.innerRoot() that was lead to error in two special cases.
@@ -23,14 +35,13 @@ Hisory of changes
 2. Added full Java documentation to all methods in MiniMath class.
 3. Added small part of Java documentation in SlicedDouble class.
 4. Removed one of the constructors in SlicedDouble class.
-5. Minor edits to both classes was applied.
+5. Minor edits to both classes were applied.
 
 28.03.2020
 1. Added MiniMath.intPowerNoLimits() method to permit handle double overflowing numbers.
 2. MiniMath.substaract() was renamed to MiniMath.substraction() to comply with style of other names.
 3. Adding java documentation to MiniMath source is in the progress.
 4. Added individual test methods to MiniMath.
-
 
 26.03.2020
 1. MiniMath.substract() and MiniMath.innerSub() methods are ready to use;
@@ -41,10 +52,10 @@ Hisory of changes
 6. All functions were tested on large range of values many times, and after debugging all works correctly.
 
 25.03.2020
-1. Added getFractPowerResult() method to MiniMath, and fractPower() was updated to include callings of it.
+1. Added getFractPowerResult() method to MiniMath, and fractPower() were updated to include callings of it.
 2. SlashedDouble.fetchRaw() was renamed to parseRaw() and overloading method was added.
 3. Added new div() methods for integer division, and the former div() methods wich returns result with fraction part was renamed to division().
-4. Added methods getPairSign() and divisionPreCheck() for generalization these operations. Thereafter mult(), pow() and division() methods was updated.
+4. Added methods getPairSign() and divisionPreCheck() for generalization these operations. Thereafter mult(), pow() and division() methods were updated.
 5. Added floorDiv() method to MiniMath, that works similarly like its colleague from Math class, except that it return Double, or SlashedDouble results and because of it nature, there is -0.0 result availible, and there is no integer overflow likewise special case with dividend Integer.MIN_VALUE and divisor -1 that lead to overflow in Math.floorDiv() function.
 6. Added remainderPreCheck() method.
 7. Added divisionRemainder() method that works similarly like '%' operator.

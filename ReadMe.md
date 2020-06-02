@@ -1,6 +1,6 @@
 # MinimalMath
 
-The main goal of this project - to achive functionality likewise of some functions of *java.lang.Math* class, but with unusual condition - software calculating with using only some of the basic operators. Instead, we try to accomplish that without of using *substract*, *multiplying*, *division* and *remainder* operators. That's it - the only operator that we can use (from main mathematics operations from the box) is *summing*. To be more specific: *summing, bitwise with bit shifting operators, condition operators and unary minus (last one only in case where no calculations are actually needed - when it is not, and some kind of substraction is necessary, there uses a summing with complement)*. More of it, we are using only standart built-in classes and types. Most calculations are made with conjuction of *Long* and *String* classes that are the sliced parts of full *double (IEEE754)* in respective surrogate type.
+The main goal of this project - to achive functionality likewise of some functions of *java.lang.Math* class, but with unusual condition - software calculating with using only some of the basic operators. Instead, we try to accomplish that without of using substract, multiplying, division and remainder operators. That is - the only operator that we can use (from main mathematics operations from the box) is summing. To be more specific: summing, bitwise with bit shifting operators, condition operators and unary minus (last one only in case where no calculations are actually needed - when it is not and some kind of substraction is necessary, there used a summing with complement). More of it, we are using only standart built-in classes and types. Most calculations are made with conjuction of *Long* and *String* classes that are the sliced parts of full *double (IEEE754)* in respective surrogate type.
 
 ## Classes
 
@@ -57,20 +57,16 @@ Next few methods are using to get the intermidiate results with no conversion an
 - *public static SlicedDouble innerDiv(SlicedDouble dividend, SlicedDouble divisor, String negativesign, int featuresign)* - returns result of the division or integer division or floor division or remainder of the division. The concrete result depends on the feature sign .
 
 
-Also, if you want to test accuracy of abovementioned functions you may use these:
+Also, if you want to test accuracy of abovementioned functions you may use it such way:
+ru.andreygs.minimalmath.MiniMath test \[accuracy\]
+Tests availible: sum substraction division intdivision intfloordiv
+remainderofdiv floormod ceil floor powint pow mult
+Accuracy as integer that is the number of digits
+from decimal point in range from 12 to 16 (inclusive)
+Default accuracy is 1.0e-12
 
-- *static void testSum();*
-- *static void testSubstraction();*
-- *static void testDivision();*
-- *static void testIntegerDivision();*
-- *static void testIntegerFloorDivision();*
-- *static void testRemainderOfDivision();*
-- *static void testFloorModulus();*
-- *static void testCeil();*
-- *static void testFloor();*
-- *static void testPowInteger();*
-- *static void testPow();*
-
+For comparison of speed with fork on C (CMinimalMath) use:
+ru.andreygs.minimalmath.MiniMath mult \[accuracy\]
 
 Finally you may try to use some functionality of SlicedDouble objects - these have many of the public methods.
 

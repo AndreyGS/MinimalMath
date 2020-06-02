@@ -1,6 +1,7 @@
 package ru.andreygs.minimalmath;
 
 import static java.lang.System.*;
+import java.time.Instant;
 
 /**
  * The {@code MiniMath} class is implementing some of the
@@ -26,7 +27,7 @@ import static java.lang.System.*;
  * in comparison with embedded functions.
  *
  * <p>But the main goal of this class is in its implemention. The only
- * built-in operators that was used are summing, bitwise and conditional.
+ * built-in operators that were used are summing, bitwise and conditional.
  * More of it, the summing method is also exists here - mainly for
  * working with {@code SlicedDouble} type directly.
  *
@@ -439,7 +440,7 @@ public class MiniMath {
 			return number1;
 		else if (number2.getDouble() != null && Double.isNaN(number2.getDouble()))
 			return number2;
-		
+
 		long product = 0l, unit;
 		String num2raw;
 		
@@ -450,48 +451,110 @@ public class MiniMath {
 			unit = number1.getLongRaw();
 			num2raw = number2.getBinaryRaw();
 		}
-		
+		/*
 		int biasproduct = 0; 
-
-		for (int i = num2raw.length() + 0xffffffff, shift = 0, check, spaceneed, leadzeroes, carry; i > 0xffffffff; i+= 0xffffffff, shift++) {
-			String test;
+        int leadzeros = Long.numberOfLeadingZeros(unit);
+        
+		for (int i = num2raw.length() + 0xffffffff, shift = 0, check, spaceneed, carry; i > 0xffffffff; i+= 0xffffffff, shift++) {
+			
 			if (num2raw.charAt(i) == '1') {
-				leadzeroes = Long.numberOfLeadingZeros(unit);
-				check = leadzeroes + ~shift;
+				//leadzeros = Long.numberOfLeadingZeros(unit);
+				check = leadzeros + ~shift;
 				if (check > 0xffffffff) {
 					unit <<= shift;
+                    leadzeros += ~shift +1;
 				} else {
 					carry = 0;
-					if (leadzeroes == 0) {
-						if (Long.numberOfTrailingZeros(unit) == 0) carry = 1;
+					if (leadzeros == 0) {
+						if ((unit & 0x01) == 1) carry = 1;
 						unit >>>= 1;
 						unit += carry;
-						spaceneed = ~check + 1;
 						if (product > 0) {
+                            carry = 0;
 							if (Long.numberOfTrailingZeros(product) == 0) carry = 1;
 							product >>>= 1;
 							product += carry;
 						}
 						biasproduct += shift + 1;
 					} else {
-						unit <<= leadzeroes + 0xffffffff;
+						unit <<= leadzeros + 0xffffffff;
 						spaceneed = ~check + 1;
-						test = Long.toBinaryString(product);
-						if (test.length() >= spaceneed) {
-							if (test.charAt(test.length()+check) == '1') carry = 1;
-						}
+                        if (((product >>> (spaceneed - 1)) & 0x01) == 1) carry = 1;
 						product >>>= spaceneed;
 						product += carry;
 						biasproduct += spaceneed;
 					}
+                    leadzeros = 1;
 				}
 				product += unit;
 				shift = 0;
 			}
-		}
+		}*/
+        
+        int biasproduct = 0; 
+        int leadzeros = Long.numberOfLeadingZeros(unit);
+         
+        int i = num2raw.length() + 0xffffffff;
+        for (int shift = 0, check, spaceneed; i > 0xffffffff; i+= 0xffffffff) {
+            if (num2raw.charAt(i) == '1') {
+                check = leadzeros + ~shift;
+                if (check > 0xffffffff) {
+                    unit <<= shift;
+                    leadzeros += ~shift +1;
+                } else {
+                    if (leadzeros == 0) {
+						if ((unit & 0x01) == 1) { unit >>>= 1; unit++; }
+                        else unit >>>= 1;
+						if (product > 0) {
+							if ((product & 0x01) == 1) {
+                                product >>>= 1;
+                                ++product;
+                            } else
+                                product >>>= 1;
+						}
+						biasproduct += shift + 1;
+					} else {
+                        unit <<= leadzeros + 0xffffffff;
+                        spaceneed = -check;
+                        if (((product >>> (spaceneed + 0xffffffff)) & 0x01) == 1) {
+                            product >>>= spaceneed;
+                            product++;
+                        } else {
+                            product >>>= spaceneed;
+                        }
+                        biasproduct += spaceneed;
+                    }
 
+                    product += unit;
+                    i += 0xffffffff;
+                    break;
+                }
+                product += unit;
+                shift = 1;
+            } else {
+                shift++;
+            }
+        }
+        
+        for (int shift = 1; i > 0xffffffff; i+= 0xffffffff) {
+            if (num2raw.charAt(i) == '1') {
+                if (((product >>> (shift + 0xffffffff)) & 0x01) == 1) {
+                    product >>>= shift;
+                    product++;
+                } else {
+                    product >>>= shift;
+                }
+                biasproduct += shift;
+
+                product += unit;
+                shift = 1;
+            } else {
+                shift++;
+            }
+        }
+        
 		String raw = Long.toBinaryString(product);
-		
+
 		int productexp = getMultExponent(raw, number1.getExp(), number2.getExp(), number1.getBinaryRaw(), number2.getBinaryRaw(), biasproduct);
 
 		return new SlicedDouble(raw, productexp, negativesign);
@@ -1710,23 +1773,155 @@ public class MiniMath {
 	}
 	
 	public static void main(String[] args) {
-		//testSum();
-		//testSubstraction();
-		//testDivision();
-		//testIntegerDivision();
-		//testIntegerFloorDivision();
-		//testRemainderOfDivision();
-		//testFloorModulus();
-		//testCeil();
-		//testFloor();
-	    //testPowInteger();
-		//testPow();
+        if (args.length < 1)
+            out.println("Usage:\n" +
+                        "ru.andreygs.minimalmath.MiniMath test [accuracy]\n\n" +
+                        "Tests availible: sum substraction division " +
+                        "intdivision intfloordiv\nremainderofdiv " +
+                        "floormod ceil floor powint pow mult\n\n" +
+                        "Accuracy as integer that is the number of digits\n" +
+                        "from decimal point in range from 12 to 16 (inclusive)\n" +
+                        "Default accuracy is 1.0e-12");
+        else {
+            MiniMath.Test testFunc;
+            
+            if (args[0].equals("sum"))
+                testFunc = MiniMath::testSum;
+            else if (args[0].equals("substraction"))
+                testFunc = MiniMath::testSubstraction;
+            else if (args[0].equals("division"))
+                testFunc = MiniMath::testDivision;
+            else if (args[0].equals("intdivision"))
+                testFunc = MiniMath::testIntegerDivision;
+            else if (args[0].equals("intfloordiv"))
+                testFunc = MiniMath::testIntegerFloorDivision;
+            else if (args[0].equals("remainderofdiv"))
+                testFunc = MiniMath::testRemainderOfDivision;
+            else if (args[0].equals("floormod"))
+                testFunc = MiniMath::testFloorModulus;
+            else if (args[0].equals("ceil"))
+                testFunc = MiniMath::testCeil;
+            else if (args[0].equals("floor"))
+                testFunc = MiniMath::testFloor;
+            else if (args[0].equals("powint"))
+                testFunc = MiniMath::testPowInteger;
+            else if (args[0].equals("pow"))
+                testFunc = MiniMath::testPow;
+            else if (args[0].equals("mult"))
+                testFunc = MiniMath::testMult;
+            else {
+                out.println("Not a valid input");
+                return;
+            }
+            
+            int acc;
+            
+            try {
+                acc  = Integer.parseInt(args[1]);
+                if (acc < 12) acc = 12;
+                else if (acc > 16) acc = 16;
+            } catch (Exception e) {
+                acc = 12;
+            }
+            
+            runTest(testFunc, acc);
+        }
 	}
-	
+    
+    private interface Test {
+        void test(int acc);
+    }
+    
+    private static void runTest(MiniMath.Test testFunc, int acc) {
+        Instant in1 = Instant.now();
+        testFunc.test(acc);
+        Instant in2 = Instant.now();
+        out.println(in2.getNano()-in1.getNano()+(in2.getEpochSecond()-in1.getEpochSecond())*1000000000l + "ns");
+    }
+    
+    /**
+     * Similar test as in fork C project to compare multiplication speed
+     *
+     * @param acc the accuracy of the test in digits after decimal point
+     */
+    public static void testMult(int acc) {
+        acc += 2;
+        int cacc;
+        int i, j, r, counter = 0, s = 0;
+        double factor1 = 1.0e+200,
+               factor2,
+               d1, d2,
+               r1, r2;
+              
+        String a1;
+        String a2;
+        
+        for (i = 0; i < 400; i++) {
+            factor1 = factor1 / 10; 
+            out.println("***\n" + factor1 + " power random factor\n\n");
+            factor2 = 1.0e+200;
+            for (j = 0; j < 2000; j++) {
+                if (j % 50 == 0) factor2 = factor2 / 10;
+                
+                d1 = getDPseudoRandom(j % 16, s++) * factor1;
+                d2 = getDPseudoRandom((i+j+31) % 16, s++) * factor2;
+                if (j % 2 == 0) d1 = -d1;
+                if (j % 3 == 0) d2 = -d2;
+
+                r1 = mult(d1,d2);
+                r2 = d1*d2;
+                
+                if (r1 != r2 && (r1 == r1 && r2 == r2)) {
+                    if (!(r1 == 0.9999999999999999 && r2 == 1.0) 
+                     && !(r1 == 1.0 && r2 == 0.9999999999999999)
+                     && !(r1 == 1.0000000000000002 && r2 == 1.0)
+                     && !(r1 == 1.0 && r2 == 1.0000000000000002)) {
+                        if (r1 < 0 && r2 < 0) cacc = acc+1;
+                        else cacc = acc;
+                        a1 = Double.toString(r1);
+                        a2 = Double.toString(r1);
+                        if (a1.length() >= cacc && a2.length() >= cacc) {
+                            if (!a1.substring(0, cacc).equals(a2.substring(0, cacc)))
+                                r = -1;
+                            else
+                                r = 0;
+                        } else {
+                            r = -1;
+                        }
+
+                        if (r == -1) {
+                            out.println("in: " + d1 + " in: " + d2 + "\n"
+                                       + r1 + "\n" + r2);
+                                    ;
+                            counter++;
+                        }
+                    }
+                }
+            }
+        }
+    
+        out.println("\n" + counter + " outputs in real number multiplication test "
+           + "that have missed accuracy\n");
+    }
+    
+    /**
+     * Similar method as in fork C project to compare multiplication speed
+     */
+    private static double getDPseudoRandom(int i, int s) {
+        Instant in = Instant.now();
+        double d = in.getNano()/1000000000.0 * ((s % 100000)+1) * ((i % 65536) + 1) / 6553600000.0;
+        if (d >= 1) return d/2;
+        else return d;
+    }
+    
 	/**
 	 * Test of pow method
-	 */
-	public static void testPow() {
+     *
+	 * @param acc the accuracy of the test in digits after decimal point
+     */
+	public static void testPow(int acc) {
+        acc += 2;
+        int cacc;
 		double factor1 = 100000000000000000000000000000000000000000.0, factor2;
 		int counter = 0;
 		
@@ -1741,7 +1936,9 @@ public class MiniMath {
 				if (j % 3 == 0) power = -power;
 				double result1 = pow(num, power), result2 = Math.pow(num, power);
 				if (result1 != result2 && (!Double.isNaN(result1) && !Double.isNaN(result1))) {
-					if ((Double.toString(result1).length() < 16 || Double.toString(result2).length() < 16 || !Double.toString(result1).substring(0, 16).equals(Double.toString(result2).substring(0, 16))) && !(result1 == 1.0 && result2 == 1.0000000000000002) && (result1 == 1.0000000000000002 && result2 == 1.0) && !(result1 == 0.9999999999999999 && result2 == 1.0) && !(result1 == 1.0 && result2 == 0.9999999999999999)) {
+                    if (result1 < 0 && result2 < 0) cacc = acc+1;
+                    else cacc = acc;
+					if ((Double.toString(result1).length() < cacc || Double.toString(result2).length() < cacc || !Double.toString(result1).substring(0, cacc).equals(Double.toString(result2).substring(0, cacc))) && !(result1 == 1.0 && result2 == 1.0000000000000002) && (result1 == 1.0000000000000002 && result2 == 1.0) && !(result1 == 0.9999999999999999 && result2 == 1.0) && !(result1 == 1.0 && result2 == 0.9999999999999999)) {
 					out.println(num + "!");
 					out.println(power);
 					out.println(result1);
@@ -1759,8 +1956,12 @@ public class MiniMath {
 	
 	/**
 	 * Test of pow method with integer powers
-	 */
-	public static void testPowInteger() {
+	 *
+	 * @param acc the accuracy of the test in digits after decimal point
+     */
+	public static void testPowInteger(int acc) {
+        acc += 2;
+        int cacc;
 		double factor1 = 100000000000000000000000000000000000000000.0, factor2;
 		int counter = 0;
 		
@@ -1775,7 +1976,9 @@ public class MiniMath {
 				if (j % 3 == 0) power = -power;
 				double result1 = pow(num, power), result2 = Math.pow(num, power);
 				if (result1 != result2 && (!Double.isNaN(result1) && !Double.isNaN(result1))) {
-					if ((Double.toString(result1).length() < 16 || Double.toString(result2).length() < 16 || !Double.toString(result1).substring(0, 16).equals(Double.toString(result2).substring(0, 16)))) {
+                    if (result1 < 0 && result2 < 0) cacc = acc+1;
+                    else cacc = acc;
+					if ((Double.toString(result1).length() < cacc || Double.toString(result2).length() < cacc || !Double.toString(result1).substring(0, cacc).equals(Double.toString(result2).substring(0, cacc)))) {
 					out.println(num + "!");
 					out.println(power);
 					out.println(result1);
@@ -1793,8 +1996,13 @@ public class MiniMath {
 	
 	/**
 	 * Test of summing
-	 */
-	public static void testSum() {
+	 *
+	 * @param acc the accuracy of the test in digits after decimal point
+     */
+	public static void testSum(int acc) {
+        acc += 2;
+        int cacc;
+        
 		double factor1 = 1.0E308, factor2;
 		int counter = 0;
 		
@@ -1809,7 +2017,9 @@ public class MiniMath {
 				if (j % 3 == 0) number2 = -number2;
 				double result1 = sum(number1, number2), result2 = number1 + number2;
 				if (result1 != result2 && (!Double.isNaN(result1) && !Double.isNaN(result1))) {
-					if ((Double.toString(result1).length() < 15 || Double.toString(result2).length() < 15 || !Double.toString(result1).substring(0, 15).equals(Double.toString(result2).substring(0, 15)))) {
+                    if (result1 < 0 && result2 < 0) cacc = acc+1;
+                    else cacc = acc;
+					if ((Double.toString(result1).length() < cacc || Double.toString(result2).length() < cacc || !Double.toString(result1).substring(0, cacc).equals(Double.toString(result2).substring(0, cacc)))) {
 						out.println(number1 + "!");
 						out.println(number2);
 						out.println(result1);
@@ -1827,8 +2037,13 @@ public class MiniMath {
 	
 	/**
 	 * Test of substraction
-	 */
-	public static void testSubstraction() {
+	 *
+	 * @param acc the accuracy of the test in digits after decimal point
+     */
+	public static void testSubstraction(int acc) {
+        acc += 2;
+        int cacc;
+        
 		double factor1 = 1.0E308, factor2;
 		int counter = 0;
 		
@@ -1843,7 +2058,10 @@ public class MiniMath {
 				if (j % 3 == 0) subtrahend = -subtrahend;
 				double result1 = substraction(minuend, subtrahend), result2 = minuend - subtrahend;
 				if (result1 != result2 && (!Double.isNaN(result1) && !Double.isNaN(result1))) {
-					if ((Double.toString(result1).length() < 15 || Double.toString(result2).length() < 15 || !Double.toString(result1).substring(0, 15).equals(Double.toString(result2).substring(0, 15)))) {
+                    if (result1 < 0 && result2 < 0) cacc = acc+1;
+                    else cacc = acc;
+                    
+					if ((Double.toString(result1).length() < cacc || Double.toString(result2).length() < cacc || !Double.toString(result1).substring(0, cacc).equals(Double.toString(result2).substring(0, cacc)))) {
 						out.println(minuend + "!");
 						out.println(subtrahend);
 						out.println(result1);
@@ -1861,8 +2079,11 @@ public class MiniMath {
 	
 	/**
 	 * Test of division
-	 */
-	public static void testDivision() {
+	 *
+	 * @param acc the accuracy of the test in digits after decimal point
+     * (parameter is dummy for the interface)
+     */
+	public static void testDivision(int acc) {
 		double factor1 = 1.0E308, factor2;
 		int counter = 0;
 		
@@ -1894,8 +2115,11 @@ public class MiniMath {
 	
 	/**
 	 * Test of integer division
+     *
+	 * @param acc the accuracy of the test in digits after decimal point
+     * (parameter is dummy for the interface)
 	 */
-	public static void testIntegerDivision() {
+	public static void testIntegerDivision(int acc) {
 		double factor1 = 2100000000, factor2;
 		int counter = 0;
 		
@@ -1929,8 +2153,11 @@ public class MiniMath {
 	
 	/**
 	 * Test of floor integer division
+	 *
+	 * @param acc the accuracy of the test in digits after decimal point
+     * (parameter is dummy for the interface)
 	 */
-	public static void testIntegerFloorDivision() {
+	public static void testIntegerFloorDivision(int acc) {
 		double factor1 = 2100000000, factor2;
 		int counter = 0;
 		
@@ -1964,8 +2191,11 @@ public class MiniMath {
 	
 	/**
 	 * Test of division remainder extracting
+	 *
+	 * @param acc the accuracy of the test in digits after decimal point
+     * (parameter is dummy for the interface)
 	 */
-	public static void testRemainderOfDivision() {
+	public static void testRemainderOfDivision(int acc) {
 		double factor1 = 2100000000, factor2;
 		int counter = 0;
 		
@@ -1999,8 +2229,11 @@ public class MiniMath {
 	
 	/**
 	 * Test of floor modulus obtaining
+	 *
+	 * @param acc the accuracy of the test in digits after decimal point
+     * (parameter is dummy for the interface)
 	 */
-	public static void testFloorModulus() {
+	public static void testFloorModulus(int acc) {
 		double factor1 = 2100000000, factor2;
 		int counter = 0;
 		
@@ -2033,9 +2266,12 @@ public class MiniMath {
 	}
 	
 	/**
-	 * Test of intger floor obtaining
+	 * Test of integer floor obtaining
+	 *
+	 * @param acc the accuracy of the test in digits after decimal point
+     * (parameter is dummy for the interface)
 	 */
-	public static void testFloor() {
+	public static void testFloor(int acc) {
 		double factor1 = 1.0E308;
 		int counter = 0;
 		
@@ -2061,8 +2297,11 @@ public class MiniMath {
 	
 	/**
 	 * Test of integer ceil obtaining
+	 *
+	 * @param acc the accuracy of the test in digits after decimal point
+     * (parameter is dummy for the interface)
 	 */
-	public static void testCeil() {
+	public static void testCeil(int acc) {
 		double factor1 = 1.0E308;
 		int counter = 0;
 		
