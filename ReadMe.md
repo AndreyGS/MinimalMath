@@ -57,15 +57,17 @@ Next few methods are using to get the intermidiate results with no conversion an
 - *public static SlicedDouble innerDiv(SlicedDouble dividend, SlicedDouble divisor, String negativesign, int featuresign)* - returns result of the division or integer division or floor division or remainder of the division. The concrete result depends on the feature sign .
 
 
-Also, if you want to test accuracy of abovementioned functions you may use it such way:
-ru.andreygs.minimalmath.MiniMath test \[accuracy\]
-Tests availible: sum substraction division intdivision intfloordiv
-remainderofdiv floormod ceil floor powint pow mult
-Accuracy as integer that is the number of digits
-from decimal point in range from 12 to 16 (inclusive)
+Also, if you want to test accuracy of abovementioned functions you may use it such way: \
+ru.andreygs.minimalmath.MiniMath test \[accuracy\] \
+
+Tests availible: sum substraction division intdivision intfloordiv \
+remainderofdiv floormod ceil floor powint pow mult \
+
+Accuracy as integer that is the number of digits \
+from decimal point in range from 12 to 16 (inclusive) \
 Default accuracy is 1.0e-12
 
-For comparison of speed with fork on C (CMinimalMath) use:
+For comparison of speed with fork on C (CMinimalMath) use: \
 ru.andreygs.minimalmath.MiniMath mult \[accuracy\]
 
 Finally you may try to use some functionality of SlicedDouble objects - these have many of the public methods.
