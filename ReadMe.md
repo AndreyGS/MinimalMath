@@ -58,10 +58,10 @@ Next few methods are using to get the intermidiate results with no conversion an
 
 
 Also, if you want to test accuracy of abovementioned functions you may use it such way: \
-ru.andreygs.minimalmath.MiniMath test \[accuracy\] \
+ru.andreygs.minimalmath.MiniMath test \[accuracy\]
 
 Tests availible: sum substraction division intdivision intfloordiv \
-remainderofdiv floormod ceil floor powint pow mult \
+remainderofdiv floormod ceil floor powint pow mult
 
 Accuracy as integer that is the number of digits \
 from decimal point in range from 12 to 16 (inclusive) \
