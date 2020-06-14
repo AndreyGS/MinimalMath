@@ -67,9 +67,6 @@ Accuracy as integer that is the number of digits \
 from decimal point in range from 12 to 16 (inclusive) \
 Default accuracy is 1.0e-12
 
-For comparison of speed with fork on C (CMinimalMath) use: \
-ru.andreygs.minimalmath.MiniMath mult \[accuracy\]
-
 Finally you may try to use some functionality of SlicedDouble objects - these have many of the public methods.
 
 The main Java documentation is supplied in source files.

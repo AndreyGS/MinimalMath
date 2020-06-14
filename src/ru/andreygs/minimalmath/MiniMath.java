@@ -451,45 +451,6 @@ public class MiniMath {
 			unit = number1.getLongRaw();
 			num2raw = number2.getBinaryRaw();
 		}
-		/*
-		int biasproduct = 0; 
-        int leadzeros = Long.numberOfLeadingZeros(unit);
-        
-		for (int i = num2raw.length() + 0xffffffff, shift = 0, check, spaceneed, carry; i > 0xffffffff; i+= 0xffffffff, shift++) {
-			
-			if (num2raw.charAt(i) == '1') {
-				//leadzeros = Long.numberOfLeadingZeros(unit);
-				check = leadzeros + ~shift;
-				if (check > 0xffffffff) {
-					unit <<= shift;
-                    leadzeros += ~shift +1;
-				} else {
-					carry = 0;
-					if (leadzeros == 0) {
-						if ((unit & 0x01) == 1) carry = 1;
-						unit >>>= 1;
-						unit += carry;
-						if (product > 0) {
-                            carry = 0;
-							if (Long.numberOfTrailingZeros(product) == 0) carry = 1;
-							product >>>= 1;
-							product += carry;
-						}
-						biasproduct += shift + 1;
-					} else {
-						unit <<= leadzeros + 0xffffffff;
-						spaceneed = ~check + 1;
-                        if (((product >>> (spaceneed - 1)) & 0x01) == 1) carry = 1;
-						product >>>= spaceneed;
-						product += carry;
-						biasproduct += spaceneed;
-					}
-                    leadzeros = 1;
-				}
-				product += unit;
-				shift = 0;
-			}
-		}*/
         
         int biasproduct = 0; 
         int leadzeros = Long.numberOfLeadingZeros(unit);
@@ -503,16 +464,9 @@ public class MiniMath {
                     leadzeros += ~shift +1;
                 } else {
                     if (leadzeros == 0) {
-						if ((unit & 0x01) == 1) { unit >>>= 1; unit++; }
-                        else unit >>>= 1;
-						if (product > 0) {
-							if ((product & 0x01) == 1) {
-                                product >>>= 1;
-                                ++product;
-                            } else
-                                product >>>= 1;
-						}
-						biasproduct += shift + 1;
+						unit >>>= 1; 
+                        unit++;
+						biasproduct++;
 					} else {
                         unit <<= leadzeros + 0xffffffff;
                         spaceneed = -check;
@@ -1775,13 +1729,13 @@ public class MiniMath {
 	public static void main(String[] args) {
         if (args.length < 1)
             out.println("Usage:\n" +
-                        "ru.andreygs.minimalmath.MiniMath test [accuracy]\n\n" +
+                        "ru.andreygs.minimalmath.MiniMath test [precision]\n\n" +
                         "Tests availible: sum substraction division " +
                         "intdivision intfloordiv\nremainderofdiv " +
                         "floormod ceil floor powint pow mult\n\n" +
-                        "Accuracy as integer that is the number of digits\n" +
+                        "Precision as integer that is the number of digits\n" +
                         "from decimal point in range from 12 to 16 (inclusive)\n" +
-                        "Default accuracy is 1.0e-12");
+                        "Default precision is 1.0e-12");
         else {
             MiniMath.Test testFunc;
             
